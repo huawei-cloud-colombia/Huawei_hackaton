@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS CLOUD // SIGNAL-80 - Control Room</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0d1117; color: #c9d1d9; }
+        .header { background: #161b22; padding: 15px 30px; border-bottom: 2px solid #f85149; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { color: #f85149; font-size: 1.4em; }
+        .header .meta { color: #8b949e; font-size: 0.85em; }
+        .container { display: flex; padding: 20px; gap: 20px; }
+        .sidebar { width: 300px; flex-shrink: 0; }
+        .main { flex: 1; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .card h2 { color: #58a6ff; font-size: 1.1em; margin-bottom: 10px; }
+        .btn { background: #238636; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; }
+        .btn:hover { background: #2ea043; }
+        .btn-red { background: #f85149; }
+        .btn-red:hover { background: #da3633; }
+        .btn-blue { background: #1f6feb; }
+        .btn-blue:hover { background: #388bfd; }
+        .btn-sm { padding: 4px 10px; font-size: 0.8em; }
+        textarea, input, select { background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; padding: 8px; border-radius: 6px; width: 100%; }
+        textarea { resize: vertical; min-height: 80px; }
+        label { display: block; margin-bottom: 4px; color: #8b949e; font-size: 0.85em; }
+        .form-group { margin-bottom: 10px; }
+        .ticket-list { max-height: 500px; overflow-y: auto; }
+        .ticket-item { background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s; }
+        .ticket-item:hover { border-color: #58a6ff; }
+        .ticket-item.selected { border-color: #f85149; background: #2d1b1b; }
+        .priority { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .p1 { background: #f85149; color: #fff; }
+        .p2 { background: #d29922; color: #fff; }
+        .p3 { background: #58a6ff; color: #fff; }
+        .p4 { background: #3fb950; color: #fff; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; background: #30363d; color: #8b949e; margin-left: 5px; }
+        .badge-inc { background: #1f6feb; color: #fff; }
+        .badge-review { background: #d29922; color: #fff; }
+        .badge-major { background: #f85149; color: #fff; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .detail-item { background: #21262d; padding: 8px; border-radius: 6px; }
+        .detail-item .key { color: #8b949e; font-size: 0.8em; }
+        .detail-item .val { color: #c9d1d9; margin-top: 2px; }
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .filters select { width: auto; }
+        .incident-item { background: #1a1f2d; border: 1px solid #1f6feb; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+        .incident-item.major { border-color: #f85149; background: #2d1b1b; }
+        .stat { display: inline-block; margin-right: 15px; }
+        .stat .num { font-size: 1.5em; font-weight: bold; }
+        .stat .lbl { font-size: 0.8em; color: #8b949e; }
+        .demo-banner { background: #d29922; color: #000; padding: 5px 15px; text-align: center; font-size: 0.85em; }
+        .hidden { display: none; }
+        .loading { text-align: center; padding: 20px; color: #8b949e; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚨 ATLAS CLOUD // SIGNAL-80</h1>
+        <div class="meta">
+            <span id="clock">08:40:00</span> | T-80 | <span id="mode-indicator">Cargando...</span>
+        </div>
+    </div>
+    <div id="demo-banner" class="demo-banner hidden">⚠️ MODO DEMO: Sin API Key de GLM 5.2. Usando clasificacion por reglas. Configure GLM_API_KEY para usar el modelo completo.</div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="card">
+                <h2>📋 Acciones</h2>
+                <button class="btn btn-blue" style="width:100%; margin-bottom:8px;" onclick="loadSample()">Cargar Dataset de Ejemplo</button>
+                <button class="btn" style="width:100%; margin-bottom:8px;" onclick="showManualForm()">Probar Ticket Manual</button>
+                <button class="btn btn-red btn-sm" style="width:100%;" onclick="clearAll()">Limpiar</button>
+            </div>
+
+            <div class="card">
+                <h2>📊 Estadísticas</h2>
+                <div id="stats">
+                    <div class="stat"><span class="num" id="stat-total">0</span><span class="lbl"> Total</span></div>
+                    <div class="stat"><span class="num" id="stat-p1">0</span><span class="lbl"> P1</span></div>
+                    <div class="stat"><span class="num" id="stat-p2">0</span><span class="lbl"> P2</span></div>
+                    <div class="stat"><span class="num" id="stat-incidents">0</span><span class="lbl"> Incidentes</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔍 Filtros</h2>
+                <div class="filters">
+                    <select id="filter-priority" onchange="applyFilters()">
+                        <option value="">Todas prioridades</option>
+                        <option value="P1">P1 - Critica</option>
+                        <option value="P2">P2 - Alta</option>
+                        <option value="P3">P3 - Normal</option>
+                        <option value="P4">P4 - Baja</option>
+                    </select>
+                    <select id="filter-category" onchange="applyFilters()">
+                        <option value="">Todas categorias</option>
+                        <option value="Cuenta y acceso">Cuenta y acceso</option>
+                        <option value="Facturacion">Facturacion</option>
+                        <option value="Disponibilidad y rendimiento">Disponibilidad</option>
+                        <option value="Integraciones">Integraciones</option>
+                        <option value="Datos y exportacion">Datos y exportacion</option>
+                        <option value="Solicitud de funcion">Solicitud de funcion</option>
+                        <option value="Seguridad">Seguridad</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <div class="card" id="manual-form" style="display:none;">
+                <h2>✍️ Probar Ticket Manual</h2>
+                <div class="form-group">
+                    <label>Ticket ID</label>
+                    <input type="text" id="manual-id" value="T-99999" />
+                </div>
+                <div class="form-group">
+                    <label>Customer ID</label>
+                    <input type="text" id="manual-customer" value="TEST-CO" />
+                </div>
+                <div class="form-group">
+                    <label>Region</label>
+                    <input type="text" id="manual-region" value="latam-north" />
+                </div>
+                <div class="form-group">
+                    <label>Texto del Ticket</label>
+                    <textarea id="manual-text">Desde esta manana los 1800 usuarios de nuestra empresa no pueden iniciar sesion con SSO.</textarea>
+                </div>
+                <button class="btn" onclick="processManual()">Evaluar Ticket</button>
+            </div>
+
+            <div class="card">
+                <h2>🎫 Cola Priorizada</h2>
+                <div id="ticket-list" class="ticket-list">
+                    <div class="loading">No hay tickets. Cargue el dataset o pruebe un ticket manual.</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🛰️ Grupos de Incidentes</h2>
+                <div id="incident-list">
+                    <div class="loading">No hay incidentes correlacionados.</div>
+                </div>
+            </div>
+
+            <div class="card" id="ticket-detail" style="display:none;">
+                <h2>🔍 Detalle del Ticket</h2>
+                <div id="detail-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allTickets = [];
+        let allIncidents = [];
+        let currentList = [];
+
+        // Escapa HTML para que texto de tickets (dato no confiable, puede venir
+        // de un usuario o del modelo) nunca se interprete como markup/JS al
+        // insertarse via innerHTML.
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // Reloj T-80
+        const startTime = new Date();
+        startTime.setHours(8, 40, 0, 0);
+        function updateClock() {
+            const now = new Date();
+            const diff = Math.floor((now - startTime) / 1000);
+            const remaining = 4800 - diff;
+            const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
+            const ss = String(remaining % 60).padStart(2, '0');
+            document.getElementById('clock').textContent = `T-${mm}:${ss}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Check mode
+        fetch('/api/config').then(r => r.json()).then(c => {
+            const indicator = document.getElementById('mode-indicator');
+            if (c.demo_mode) {
+                indicator.textContent = 'MODO DEMO';
+                indicator.style.color = '#d29922';
+                document.getElementById('demo-banner').classList.remove('hidden');
+            } else {
+                indicator.textContent = 'GLM 5.2 ACTIVO';
+                indicator.style.color = '#3fb950';
+            }
+        });
+
+        async function loadSample() {
+            const list = document.getElementById('ticket-list');
+            list.innerHTML = '<div class="loading">Procesando tickets...</div>';
+            try {
+                const resp = await fetch('/api/load-sample', { method: 'POST' });
+                const data = await resp.json();
+                allTickets = data.results || [];
+                allIncidents = data.incident_groups || [];
+                renderTickets(allTickets);
+                renderIncidents(allIncidents);
+                updateStats(allTickets, allIncidents);
+            } catch (e) {
+                list.innerHTML = '<div class="loading">Error: ' + e.message + '</div>';
+            }
+        }
+
+        function showManualForm() {
+            const form = document.getElementById('manual-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function processManual() {
+            const ticket = {
+                ticket_id: document.getElementById('manual-id').value,
+                customer_id: document.getElementById('manual-customer').value,
+                region: document.getElementById('manual-region').value,
+                created_at: new Date().toISOString(),
+                text: document.getElementById('manual-text').value
+            };
+            try {
+                const resp = await fetch('/api/triage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(ticket)
+                });
+                const result = await resp.json();
+                allTickets = [result, ...allTickets.filter(t => t.ticket_id !== result.ticket_id)];
+                renderTickets(allTickets);
+                updateStats(allTickets, allIncidents);
+                showDetail(result);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        function renderTickets(tickets) {
+            const list = document.getElementById('ticket-list');
+            // Se guarda la lista tal como se renderizo para que cada fila pueda
+            // referirse a "su" ticket por indice (ver showDetailByIndex), en vez
+            // de volcar el JSON completo del ticket dentro de un atributo HTML:
+            // eso se rompia si el texto del ticket traia una comilla (' o "),
+            // algo muy plausible en texto libre escrito por un agente o
+            // generado por el propio modelo.
+            currentList = tickets || [];
+            if (!currentList.length) {
+                list.innerHTML = '<div class="loading">No hay tickets.</div>';
+                return;
+            }
+            const priorityIcons = { P1: '🔴', P2: '🟠', P3: '🟡', P4: '🟢' };
+            list.innerHTML = currentList.map((t, i) => {
+                if (t.error) {
+                    return `<div class="ticket-item" onclick="showDetailByIndex(${i})">
+                        <span class="priority p1">ERR</span> ${escapeHtml(t.ticket_id)} - ${escapeHtml(t.error)}
+                    </div>`;
+                }
+                const pri = t.priority || 'P4';
+                const incBadge = t.incident_group_id ? `<span class="badge badge-inc">${escapeHtml(t.incident_group_id)}</span>` : '';
+                const reviewBadge = t.requires_human_review ? `<span class="badge badge-review">REVIEW</span>` : '';
+                return `<div class="ticket-item" onclick="showDetailByIndex(${i})">
+                    <span class="priority ${pri.toLowerCase()}">${priorityIcons[pri] || ''} ${escapeHtml(pri)}</span>
+                    <strong>${escapeHtml(t.ticket_id)}</strong> ${escapeHtml(t.category || 'N/A')} ${incBadge} ${reviewBadge}
+                    <div style="margin-top:4px; color:#8b949e; font-size:0.85em;">${escapeHtml((t.summary || '').substring(0, 80))}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function showDetailByIndex(i) {
+            const ticket = currentList[i];
+            if (ticket) showDetail(ticket);
+        }
+
+        function renderIncidents(incidents) {
+            const list = document.getElementById('incident-list');
+            if (!incidents || incidents.length === 0) {
+                list.innerHTML = '<div class="loading">No hay incidentes correlacionados.</div>';
+                return;
+            }
+            list.innerHTML = incidents.map(g => {
+                const majorClass = g.major_incident_candidate ? 'major' : '';
+                const majorBadge = g.major_incident_candidate ? '<span class="badge badge-major">MAJOR INCIDENT</span>' : '';
+                const opPri = g.operational_priority ? `<span class="priority ${g.operational_priority.toLowerCase()}">${escapeHtml(g.operational_priority)}</span>` : '';
+                const groupId = escapeHtml(g.incident_group_id);
+                return `<div class="incident-item ${majorClass}">
+                    <strong>${groupId}</strong> ${majorBadge} ${opPri}
+                    <div style="margin-top:4px;"><strong>${escapeHtml(g.title)}</strong></div>
+                    <div style="color:#8b949e; font-size:0.85em; margin-top:4px;">${escapeHtml(g.ticket_count)} tickets | ${escapeHtml(g.affected_module)} | ${escapeHtml(g.affected_region)}</div>
+                    <div style="color:#8b949e; font-size:0.85em; margin-top:4px;">${escapeHtml(g.summary)}</div>
+                    ${g.major_incident_candidate ? `<button class="btn btn-blue btn-sm" style="margin-top:6px;" onclick="generateBrief('${groupId}')">Generar Brief Ejecutivo</button>` : ''}
+                    <div id="brief-${groupId}"></div>
+                </div>`;
+            }).join('');
+        }
+
+        function showDetail(ticket) {
+            const detail = document.getElementById('ticket-detail');
+            const content = document.getElementById('detail-content');
+            detail.style.display = 'block';
+
+            if (ticket.error) {
+                content.innerHTML = `<div class="detail-item"><span class="key">Error</span><div class="val" style="color:#f85149;">${escapeHtml(ticket.error)}</div></div>`;
+                return;
+            }
+
+            content.innerHTML = `
+                <div style="margin-bottom:10px;">
+                    <span class="priority ${(ticket.priority||'').toLowerCase()}">${escapeHtml(ticket.priority || 'N/A')}</span>
+                    ${ticket.incident_group_id ? '<span class="badge badge-inc">' + escapeHtml(ticket.incident_group_id) + '</span>' : ''}
+                    ${ticket.requires_human_review ? '<span class="badge badge-review">REQUIERE REVISION HUMANA</span>' : ''}
+                </div>
+                <div class="detail-grid">
+                    <div class="detail-item"><span class="key">Ticket ID</span><div class="val">${escapeHtml(ticket.ticket_id)}</div></div>
+                    <div class="detail-item"><span class="key">Cliente</span><div class="val">${escapeHtml(ticket.customer_id || 'N/A')}</div></div>
+                    <div class="detail-item"><span class="key">Categoria</span><div class="val">${escapeHtml(ticket.category || 'N/A')}</div></div>
+                    <div class="detail-item"><span class="key">Prioridad</span><div class="val">${escapeHtml(ticket.priority || 'N/A')}</div></div>
+                    <div class="detail-item"><span class="key">Sentimiento</span><div class="val">${escapeHtml(ticket.sentiment || 'N/A')}</div></div>
+                    <div class="detail-item"><span class="key">Modulo</span><div class="val">${escapeHtml(ticket.product_or_module || 'N/A')}</div></div>
+                    <div class="detail-item"><span class="key">Region</span><div class="val">${escapeHtml(ticket.region || 'N/A')}</div></div>
+                    <div class="detail-item"><span class="key">Confianza</span><div class="val">${((ticket.confidence || 0) * 100).toFixed(0)}%</div></div>
+                </div>
+                <div class="detail-item" style="margin-top:10px;"><span class="key">Texto Original</span><div class="val">${escapeHtml(ticket.original_text || 'N/A')}</div></div>
+                <div class="detail-item" style="margin-top:10px;"><span class="key">Resumen</span><div class="val">${escapeHtml(ticket.summary || 'N/A')}</div></div>
+                <div class="detail-item" style="margin-top:10px;"><span class="key">Accion Sugerida</span><div class="val">${escapeHtml(ticket.suggested_action || 'N/A')}</div></div>
+                <div class="detail-item" style="margin-top:10px;"><span class="key">Respuesta Sugerida</span><div class="val">${escapeHtml(ticket.suggested_response || 'N/A')}</div></div>
+                ${ticket.correlation_id ? '<div class="detail-item" style="margin-top:10px;"><span class="key">Correlation ID</span><div class="val">' + escapeHtml(ticket.correlation_id) + '</div></div>' : ''}
+            `;
+        }
+
+        function applyFilters() {
+            const priority = document.getElementById('filter-priority').value;
+            const category = document.getElementById('filter-category').value;
+            let filtered = allTickets;
+            if (priority) filtered = filtered.filter(t => t.priority === priority);
+            if (category) filtered = filtered.filter(t => t.category === category);
+            renderTickets(filtered);
+        }
+
+        function updateStats(tickets, incidents) {
+            document.getElementById('stat-total').textContent = tickets.length;
+            document.getElementById('stat-p1').textContent = tickets.filter(t => t.priority === 'P1').length;
+            document.getElementById('stat-p2').textContent = tickets.filter(t => t.priority === 'P2').length;
+            document.getElementById('stat-incidents').textContent = incidents.length;
+        }
+
+        async function generateBrief(incidentId) {
+            const el = document.getElementById('brief-' + incidentId);
+            el.innerHTML = '<div class="loading">Generando brief...</div>';
+            try {
+                const resp = await fetch(`/api/incident/${incidentId}/brief`);
+                const brief = await resp.json();
+                el.innerHTML = `<div class="detail-item" style="margin-top:8px;">
+                    <span class="key">Brief Ejecutivo</span>
+                    <div class="val"><strong>${escapeHtml(brief.executive_summary || 'N/A')}</strong></div>
+                    <div class="val" style="margin-top:4px;"><strong>Alcance:</strong> ${escapeHtml(brief.affected_scope || 'N/A')}</div>
+                    <div class="val" style="margin-top:4px;"><strong>Patron:</strong> ${escapeHtml(brief.probable_pattern || 'N/A')}</div>
+                    <div class="val" style="margin-top:4px;"><strong>Acciones:</strong><ul>${(brief.recommended_next_actions || []).map(a => '<li>' + escapeHtml(a) + '</li>').join('')}</ul></div>
+                </div>`;
+            } catch (e) {
+                el.innerHTML = '<div class="loading">Error: ' + e.message + '</div>';
+            }
+        }
+
+        async function clearAll() {
+            await fetch('/api/clear', { method: 'POST' });
+            allTickets = [];
+            allIncidents = [];
+            renderTickets([]);
+            renderIncidents([]);
+            updateStats([], []);
+            document.getElementById('ticket-detail').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
