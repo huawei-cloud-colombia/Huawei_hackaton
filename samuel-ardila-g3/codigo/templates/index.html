@@ -93,6 +93,35 @@
         <p class="placeholder">Confirma con escenario RECURRENCE para activar cuotas.</p>
       </div>
     </section>
+
+    <section class="panel sim-panel">
+      <h2>Simulacion de Trafico</h2>
+      <div class="sim-controls">
+        <label>Usuarios/seg:
+          <input type="number" id="sim-users" value="5" min="1" max="50" size="3">
+        </label>
+        <label>Liberar tras (s):
+          <input type="number" id="sim-release" value="3" min="1" max="60" size="3">
+        </label>
+        <label>% que pagan:
+          <input type="number" id="sim-pay-pct" value="30" min="0" max="100" size="3">
+        </label>
+        <button id="btn-sim-start">INICIAR</button>
+        <button id="btn-sim-stop" class="btn-danger" disabled>DETENER</button>
+        <button id="btn-sim-clear" class="btn-secondary">LIMPIAR LOG</button>
+      </div>
+      <div class="sim-stats">
+        <span id="sim-stat-holds" class="badge green">Holds: 0</span>
+        <span id="sim-stat-rejected" class="badge red">Rechazados: 0</span>
+        <span id="sim-stat-sold" class="badge yellow">Vendidos: 0</span>
+        <span id="sim-stat-released" class="badge blue">Liberados: 0</span>
+      </div>
+    </section>
+
+    <section class="panel console-panel">
+      <h2>Consola de Eventos</h2>
+      <div id="console-log" class="console-log"></div>
+    </section>
   </main>
 
   <div id="toast" class="toast"></div>

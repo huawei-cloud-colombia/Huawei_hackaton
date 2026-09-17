@@ -43,6 +43,10 @@ main {
   gap: 12px;
 }
 
+.console-panel, .sim-panel {
+  grid-column: 1 / -1;
+}
+
 .panel {
   background: #161b22;
   border: 1px solid #30363d;
@@ -178,3 +182,43 @@ button:hover { opacity: 0.9; }
 
 .toast.error { background: #da3633; }
 .toast.show { display: block; }
+
+.sim-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.sim-controls label { font-size: 0.85rem; }
+.sim-controls input {
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+.sim-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.console-log {
+  background: #010409;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 12px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.console-log .log-line { margin-bottom: 2px; }
+.console-log .log-time { color: #6e7681; }
+.console-log .log-info { color: #c9d1d9; }
+.console-log .log-success { color: #3fb950; }
+.console-log .log-error { color: #f85149; }
+.console-log .log-warn { color: #d29922; }
+.console-log .log-debug { color: #8b949e; }
+.console-log .log-user { color: #58a6ff; }

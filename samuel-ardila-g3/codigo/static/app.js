@@ -262,6 +262,123 @@ async function btnResetCB() {
   }
 }
 
+let simRunning = false;
+let simTimer = null;
+let simCounters = { holds: 0, rejected: 0, sold: 0, released: 0 };
+let simUserCounter = 0;
+
+function logConsole(level, msg) {
+  const el = document.getElementById('console-log');
+  const now = new Date().toLocaleTimeString('es', { hour12: false }) + '.' + String(Date.now() % 1000).padStart(3, '0');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">[${now}]</span> <span class="log-${level}">${msg}</span>`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+  while (el.children.length > 500) el.removeChild(el.firstChild);
+}
+
+function updateSimStats() {
+  document.getElementById('sim-stat-holds').textContent = `Holds: ${simCounters.holds}`;
+  document.getElementById('sim-stat-rejected').textContent = `Rechazados: ${simCounters.rejected}`;
+  document.getElementById('sim-stat-sold').textContent = `Vendidos: ${simCounters.sold}`;
+  document.getElementById('sim-stat-released').textContent = `Liberados: ${simCounters.released}`;
+}
+
+async function simUser() {
+  const userId = `usr_sim_${simUserCounter++}`;
+  logConsole('user', `${userId} >> buscando asiento disponible...`);
+
+  try {
+    const seatsRes = await api('/api/seats');
+    const avail = seatsRes.data.seats.filter(s => s.status === 'AVAILABLE');
+    if (avail.length === 0) {
+      logConsole('warn', `${userId} >> no hay asientos disponibles`);
+      return;
+    }
+    const seat = avail[Math.floor(Math.random() * avail.length)];
+    logConsole('debug', `${userId} >> intenta reservar ${seat.seat_id}`);
+
+    const idemKey = `sim-${userId}-${Date.now()}`;
+    const holdRes = await apiPost('/api/holds', {
+      user_id: userId,
+      event_id: 'aurora-bogota-2026',
+      seat_ids: [seat.seat_id],
+    }, { 'Idempotency-Key': idemKey });
+
+    if (!holdRes.ok) {
+      simCounters.rejected++;
+      updateSimStats();
+      logConsole('error', `${userId} >> RECHAZADO ${seat.seat_id} (${holdRes.data.error})`);
+      return;
+    }
+
+    simCounters.holds++;
+    updateSimStats();
+    logConsole('success', `${userId} >> HOLD ${holdRes.data.hold_id} | ${seat.seat_id} | ${holdRes.data.total} COP`);
+
+    const releaseAfter = parseInt(document.getElementById('sim-release').value) * 1000;
+    const payPct = parseInt(document.getElementById('sim-pay-pct').value);
+    const willPay = Math.random() * 100 < payPct;
+
+    setTimeout(async () => {
+      if (!simRunning) return;
+      if (willPay) {
+        const payRes = await apiPost('/api/holds/' + holdRes.data.hold_id + '/confirm', {
+          payment_token: 'tok_sim_' + userId,
+          scenario: 'APPROVED',
+        });
+        if (payRes.ok && payRes.data.result === 'APPROVED') {
+          simCounters.sold++;
+          updateSimStats();
+          logConsole('success', `${userId} >> PAGADO ${seat.seat_id} -> SOLD`);
+        } else {
+          logConsole('error', `${userId} >> pago fallo: ${payRes.data?.error || 'unknown'}`);
+        }
+      } else {
+        const relRes = await api('/api/holds/' + holdRes.data.hold_id, { method: 'DELETE' });
+        if (relRes.ok) {
+          simCounters.released++;
+          updateSimStats();
+          logConsole('info', `${userId} >> LIBERADO ${seat.seat_id} -> AVAILABLE`);
+        }
+      }
+    }, releaseAfter);
+  } catch (e) {
+    logConsole('error', `${userId} >> excepcion: ${e.message}`);
+  }
+}
+
+function startSim() {
+  simRunning = true;
+  simCounters = { holds: 0, rejected: 0, sold: 0, released: 0 };
+  simUserCounter = 0;
+  updateSimStats();
+  const usersPerSec = parseInt(document.getElementById('sim-users').value);
+  logConsole('info', `=== SIMULACION INICIADA | ${usersPerSec} usuarios/seg ===`);
+  document.getElementById('btn-sim-start').disabled = true;
+  document.getElementById('btn-sim-stop').disabled = false;
+
+  simTimer = setInterval(() => {
+    if (!simRunning) return;
+    for (let i = 0; i < usersPerSec; i++) {
+      simUser();
+    }
+  }, 1000);
+}
+
+function stopSim() {
+  simRunning = false;
+  if (simTimer) clearInterval(simTimer);
+  logConsole('warn', `=== SIMULACION DETENIDA ===`);
+  document.getElementById('btn-sim-start').disabled = false;
+  document.getElementById('btn-sim-stop').disabled = true;
+}
+
+function clearConsole() {
+  document.getElementById('console-log').innerHTML = '';
+}
+
 function init() {
   document.getElementById('btn-reserve').onclick = btnReserve;
   document.getElementById('btn-sim-reserve').onclick = btnSimReserve;
@@ -270,6 +387,9 @@ function init() {
   document.getElementById('btn-race').onclick = btnRace;
   document.getElementById('btn-apply-config').onclick = btnApplyConfig;
   document.getElementById('section-filter').onchange = loadSeats;
+  document.getElementById('btn-sim-start').onclick = startSim;
+  document.getElementById('btn-sim-stop').onclick = stopSim;
+  document.getElementById('btn-sim-clear').onclick = clearConsole;
 
   loadSeats();
   updateQueueStats();
