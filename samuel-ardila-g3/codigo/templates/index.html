@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS Control Room</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>NEXUS CONTROL ROOM</h1>
+    <div class="badges">
+      <span id="badge-queue" class="badge">Cola: 0/50</span>
+      <span id="badge-cb" class="badge cb-closed">CB: CLOSED</span>
+      <span id="badge-ttl" class="badge">TTL: 120s</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel seats-panel">
+      <h2>Mapa de Asientos</h2>
+      <div class="filter-bar">
+        <label>Seccion:
+          <select id="section-filter">
+            <option value="">Todas</option>
+            <option value="VIP">VIP</option>
+            <option value="GENERAL">GENERAL</option>
+          </select>
+        </label>
+        <label>Usuario:
+          <input type="text" id="user-id" value="usr_juez" size="12">
+        </label>
+        <label>TTL (s):
+          <input type="number" id="ttl-input" value="120" min="5" max="600" size="4">
+        </label>
+        <button id="btn-apply-config">Aplicar</button>
+      </div>
+      <div id="seat-map" class="seat-map"></div>
+      <div class="seat-actions">
+        <span id="selected-count">0 seleccionados</span>
+        <button id="btn-reserve">RESERVAR</button>
+        <button id="btn-sim-reserve" class="btn-secondary">SIMULAR UNA RESERVA</button>
+      </div>
+    </section>
+
+    <section class="panel hold-panel">
+      <h2>Info de la Reserva</h2>
+      <div id="hold-info" class="hold-info">
+        <p class="placeholder">No hay reserva activa. Selecciona asientos y presiona RESERVAR.</p>
+      </div>
+      <div class="pay-section" id="pay-section" style="display:none;">
+        <hr>
+        <label>Payment Token:
+          <input type="text" id="payment-token" value="tok_test_91827" size="20">
+        </label>
+        <label>Escenario de pago:
+          <select id="scenario">
+            <option value="AUTO">Automatico (realista)</option>
+            <option value="APPROVED">Aprobado</option>
+            <option value="DECLINED">Rechazado</option>
+            <option value="ERROR">Error del proveedor</option>
+            <option value="TIMEOUT">Timeout (>2s)</option>
+            <option value="RECURRENCE">Pago recurrente (cuotas)</option>
+          </select>
+        </label>
+        <button id="btn-pay">PAGAR</button>
+        <button id="btn-release" class="btn-danger">LIBERAR</button>
+      </div>
+    </section>
+
+    <section class="panel race-panel">
+      <h2>Simular Carrera</h2>
+      <label>Asiento:
+        <input type="text" id="race-seat" value="VIP-A-001" size="12">
+      </label>
+      <label>N usuarios:
+        <input type="number" id="race-n" value="20" min="2" max="100" size="4">
+      </label>
+      <button id="btn-race">SIMULAR CARRERA</button>
+      <div id="race-result" class="race-result"></div>
+    </section>
+
+    <section class="panel audit-panel">
+      <h2>Trazabilidad</h2>
+      <div id="audit-log" class="audit-log">
+        <p class="placeholder">Selecciona una reserva para ver su historial.</p>
+      </div>
+    </section>
+
+    <section class="panel recurrence-panel">
+      <h2>Recurrencia</h2>
+      <div id="recurrence-info" class="recurrence-info">
+        <p class="placeholder">Confirma con escenario RECURRENCE para activar cuotas.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

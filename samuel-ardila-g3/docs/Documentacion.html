@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS LIVE — Documento del Proyecto</title>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      line-height: 1.7;
+      padding: 0;
+    }
+    header {
+      background: #161b22;
+      border-bottom: 2px solid #58a6ff;
+      padding: 30px 40px;
+    }
+    header h1 { color: #58a6ff; font-size: 2rem; }
+    header p { color: #8b949e; margin-top: 8px; }
+    nav {
+      background: #21262d;
+      padding: 10px 40px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid #30363d;
+    }
+    nav a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+    nav a:hover { text-decoration: underline; }
+    main { max-width: 1100px; margin: 0 auto; padding: 30px 40px; }
+    section { margin-bottom: 50px; }
+    h2 { color: #58a6ff; font-size: 1.5rem; margin-bottom: 15px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+    h3 { color: #d29922; font-size: 1.15rem; margin: 20px 0 10px; }
+    p { margin-bottom: 12px; }
+    ul, ol { margin-bottom: 12px; padding-left: 25px; }
+    li { margin-bottom: 6px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid #30363d;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th { background: #21262d; color: #58a6ff; }
+    tr:nth-child(even) { background: #161b22; }
+    code {
+      background: #21262d;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.88rem;
+      color: #f0883e;
+    }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 15px 0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-right: 5px;
+    }
+    .green { background: #1a3a2a; color: #3fb950; }
+    .yellow { background: #3a351a; color: #d29922; }
+    .red { background: #3a1a1a; color: #f85149; }
+    .blue { background: #1a2a3a; color: #58a6ff; }
+    .mermaid {
+      background: #161b22;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+      text-align: center;
+    }
+    .note {
+      background: #1a2a3a;
+      border-left: 3px solid #58a6ff;
+      padding: 12px 16px;
+      margin: 15px 0;
+      border-radius: 0 4px 4px 0;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #6e7681;
+      border-top: 1px solid #30363d;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>NEXUS LIVE // T-80</h1>
+  <p>Motor de Reservas de Alta Concurrencia — Documento simple del proyecto</p>
+</header>
+
+<nav>
+  <a href="#que-es">¿Qué es?</a>
+  <a href="#como-usar">Cómo se usa</a>
+  <a href="#estados">Estados</a>
+  <a href="#flujo">Flujo</a>
+  <a href="#concurrencia">Concurrencia</a>
+  <a href="#db">Modelo de DB</a>
+  <a href="#historias">Historias de usuario</a>
+  <a href="#tablas">Tablas</a>
+  <a href="#pago">Pago</a>
+</nav>
+
+<main>
+
+<!-- QUE ES -->
+<section id="que-es">
+  <h2>¿De qué trata la aplicación?</h2>
+  <p>
+    <strong>NEXUS LIVE</strong> es un sistema de venta de entradas para un evento musical
+    (<em>AURORA WORLD TOUR</em>). Hay 180.000 personas esperando y solo 42.000 entradas.
+    El problema: el motor de reservas anterior no era confiable y permitía que dos personas
+    compraran el mismo asiento.
+  </p>
+  <p>
+    Esta aplicación reconstruye el motor desde cero. Garantiza que un asiento pase de
+    <span class="badge green">AVAILABLE</span> a
+    <span class="badge yellow">HELD</span> y luego a
+    <span class="badge red">SOLD</span>
+    sin que <strong>nunca</strong> se venda a dos personas diferentes.
+  </p>
+
+  <h3>Stack tecnológico</h3>
+  <table>
+    <tr><th>Componente</th><th>Tecnología</th><th>Para qué</th></tr>
+    <tr><td>Backend</td><td>Python + Flask</td><td>Servidor web y API REST</td></tr>
+    <tr><td>Base de datos</td><td>SQLite (modo WAL)</td><td>Guardar asientos, reservas y auditoría</td></tr>
+    <tr><td>Interfaz</td><td>HTML + CSS + JavaScript</td><td>Panel visual para jueces y usuarios</td></tr>
+    <tr><td>Tests</td><td>pytest</td><td>Verificar que todo funcione (45 tests)</td></tr>
+  </table>
+</section>
+
+<!-- COMO USAR -->
+<section id="como-usar">
+  <h2>Cómo se usa</h2>
+
+  <h3>1. Iniciar el servidor</h3>
+  <div class="card">
+    <code>cd samuel-ardila-g3\codigo</code><br>
+    <code>py app.py</code><br><br>
+    Abrir <code>http://127.0.0.1:5000</code> en el navegador.
+  </div>
+
+  <h3>2. Interfaz (NEXUS Control Room)</h3>
+  <p>Al abrir el navegador verás:</p>
+  <ul>
+    <li><strong>Mapa de asientos:</strong> cuadrículas verde (disponible), amarillo (reservado), rojo (vendido).</li>
+    <li><strong>Selector de usuario:</strong> escribe qué usuario está comprando.</li>
+    <li><strong>Botón RESERVAR:</strong> crea una reserva temporal de los asientos seleccionados.</li>
+    <li><strong>Botón PAGAR:</strong> confirma la compra. Debajo hay un <strong>selector de escenario</strong> para elegir cómo responde el pago.</li>
+    <li><strong>Botón SIMULAR CARRERA:</strong> lanza N usuarios simultáneos sobre un mismo asiento para demostrar que solo uno gana.</li>
+    <li><strong>Botón SIMULAR UNA RESERVA:</strong> flujo guiado de un clic para jueces.</li>
+    <li><strong>Panel de trazabilidad:</strong> historial de cambios de estado de la reserva.</li>
+    <li><strong>Panel de recurrencia:</strong> estado de las cuotas si se pagó con RECURRENCE.</li>
+  </ul>
+
+  <h3>3. Selector de escenario de pago</h3>
+  <p>Debajo del botón <strong>PAGAR</strong> hay un menú desplegable:</p>
+  <table>
+    <tr><th>Escenario</th><th>Qué pasa</th></tr>
+    <tr><td>Automático</td><td>Comportamiento realista (70% aprobado, 10% rechazado, 10% error, 10% timeout)</td></tr>
+    <tr><td>Aprobado</td><td>El pago pasa, asiento pasa a SOLD</td></tr>
+    <tr><td>Rechazado</td><td>El pago falla, asiento vuelve a AVAILABLE</td></tr>
+    <tr><td>Error</td><td>El proveedor falla, asiento se mantiene HELD (pendiente de reintento)</td></tr>
+    <tr><td>Timeout</td><td>El proveedor no responde, asiento se mantiene HELD</td></tr>
+    <tr><td>Pago recurrente</td><td>Primer cargo aprobado, se crean 3 cuotas</td></tr>
+  </table>
+</section>
+
+<!-- ESTADOS -->
+<section id="estados">
+  <h2>Estados de un asiento</h2>
+  <p>Un asiento solo puede estar en uno de tres estados. Las transiciones están controladas por el servidor:</p>
+
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> AVAILABLE
+    AVAILABLE --> HELD: crear reserva
+    HELD --> AVAILABLE: expira / libera / pago rechazado
+    HELD --> SOLD: pago aprobado
+    SOLD --> [*]
+  </div>
+
+  <div class="note">
+    <strong>Regla clave:</strong> nunca se puede pasar de AVAILABLE directamente a SOLD.
+    Siempre debe haber un HELD intermedio. Y nunca dos HELD al mismo tiempo para el mismo asiento.
+  </div>
+</section>
+
+<!-- FLUJO -->
+<section id="flujo">
+  <h2>Flujo de la aplicación</h2>
+  <p>El flujo completo desde que un usuario entra hasta que confirma su compra:</p>
+
+  <div class="mermaid">
+flowchart TD
+    A[Usuario abre la UI] --> B[Ve mapa de asientos]
+    B --> C[Selecciona 1 o más asientos]
+    C --> D[Presiona RESERVAR]
+    D --> E{¿Todos disponibles?}
+    E -- No --> F[RECHAZADO: asiento no disponible]
+    E -- Sí --> G[HOLD creado: asientos pasan a HELD]
+    G --> H[Usuario ve info de la reserva]
+    H --> I[Elige escenario de pago]
+    I --> J[Presiona PAGAR]
+    J --> K{Resultado del pago}
+    K -- APPROVED --> L[Asientos pasan a SOLD]
+    K -- DECLINED --> M[Asientos vuelven a AVAILABLE]
+    K -- ERROR/TIMEOUT --> N[Asientos se mantienen HELD]
+    N --> O[Usuario puede reintentar]
+    L --> P[Compra confirmada]
+    M --> Q[Fin de la reserva]
+    O --> J
+  </div>
+
+  <h3>Flujo con recurrencia (cuotas)</h3>
+  <div class="mermaid">
+flowchart TD
+    A[Confirmar con RECURRENCE] --> B[Primer cargo aprobado]
+    B --> C[Crear plan de 3 cuotas]
+    C --> D[Cuota 1/3 pagada]
+    D --> E[Esperar siguiente cuota]
+    E --> F[Cobrar cuota 2/3]
+    F --> G[Esperar siguiente cuota]
+    G --> H[Cobrar cuota 3/3]
+    H --> I[Plan COMPLETED]
+  </div>
+</section>
+
+<!-- CONCURRENCIA -->
+<section id="concurrencia">
+  <h2>Concurrencia: cómo se evita el doble venta</h2>
+
+  <h3>El problema</h3>
+  <p>
+    Si 100 personas intentan reservar el mismo asiento al mismo tiempo, el sistema debe
+    garantizar que <strong>exactamente una</strong> lo consiga. No dos. No "casi siempre una".
+  </p>
+
+  <h3>La solución: Cola + Transacción atómica</h3>
+
+  <div class="mermaid">
+flowchart LR
+    A[100 solicitudes simultáneas] --> B[Cola de 50 sesiones]
+    B --> C[Procesa de a 50]
+    C --> D["BEGIN IMMEDIATE (lock de escritura)"]
+    D --> E["¿Asiento AVAILABLE?"]
+    E -- Sí --> F["Marcar HELD + COMMIT"]
+    E -- No --> G["RECHAZADO + ROLLBACK"]
+    F --> H[1 ganador]
+    G --> I[99 rechazados]
+  </div>
+
+  <p><strong>Cola de 50 sesiones (punto dulce):</strong></p>
+  <ul>
+    <li>Todas las peticiones pasan por una cola que permite máximo 50 procesándose a la vez.</li>
+    <li>Si hay más de 50, las restantes esperan. Si esperan demasiado, se rechazan con <code>503 SERVICE_BUSY</code>.</li>
+    <li>Esto evita que el sistema se degrade por sobreconsumso.</li>
+  </ul>
+
+  <p><strong>Transacción BEGIN IMMEDIATE:</strong></p>
+  <ul>
+    <li>SQLite adquiere el lock de escritura <em>antes</em> de leer el estado del asiento.</li>
+    <li>Si dos hilos compiten, el segundo espera hasta que el primero haga COMMIT o ROLLBACK.</li>
+    <li>Al re-ejecutar, el asiento ya está HELD → se rechaza.</li>
+  </ul>
+
+  <h3>Simulación de carrera (sequence diagram)</h3>
+
+  <div class="mermaid">
+sequenceDiagram
+    participant U1 as Usuario 1
+    participant U2 as Usuario 2
+    participant Q as Cola (50)
+    participant DB as SQLite
+    U1->>Q: reservar VIP-A-001
+    U2->>Q: reservar VIP-A-001
+    Q->>DB: BEGIN IMMEDIATE (U1)
+    Q->>DB: BEGIN IMMEDIATE (U2 espera)
+    DB-->>U1: asiento AVAILABLE → marcar HELD
+    U1->>DB: COMMIT
+    DB-->>U2: lock liberado, re-intentar
+    Q->>DB: BEGIN IMMEDIATE (U2)
+    DB-->>U2: asiento HELD → RECHAZADO
+    U2->>DB: ROLLBACK
+  </div>
+
+  <h3>Circuit Breaker (proveedor de pagos inestable)</h3>
+  <p>Cuando el proveedor de pagos falla repetidamente, el Circuit Breaker protege al sistema:</p>
+
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> CLOSED
+    CLOSED --> OPEN: 3 fallos consecutivos
+    OPEN --> HALF_OPEN: después de 15 segundos
+    HALF_OPEN --> CLOSED: 1 llamada de prueba exitosa
+    HALF_OPEN --> OPEN: 1 llamada de prueba fallida
+  </div>
+
+  <div class="note">
+    Cuando el CB está <strong>OPEN</strong>, las confirmaciones reciben <code>503 PAYMENT_SERVICE_UNAVAILABLE</code>
+    y el asiento <strong>no</strong> se marca como SOLD. Así nunca se vende sin certeza del pago.
+  </div>
+</section>
+
+<!-- DB MODEL -->
+<section id="db">
+  <h2>Modelo de base de datos</h2>
+  <p>El sistema usa SQLite con 7 tablas. Aquí el modelo entidad-relación:</p>
+
+  <div class="mermaid">
+erDiagram
+    seats ||--o{ hold_seats : "aparece en"
+    holds ||--o{ hold_seats : "contiene"
+    holds ||--o{ payments : "genera"
+    holds ||--o{ audit_log : "registra"
+    holds ||--o| recurrences : "tiene"
+    idempotency_keys }o--|| holds : "referencia"
+
+    seats {
+        TEXT seat_id PK
+        TEXT section
+        INTEGER price
+        TEXT currency
+        TEXT status
+        INTEGER version
+    }
+    holds {
+        TEXT hold_id PK
+        TEXT user_id
+        TEXT event_id
+        TEXT status
+        INTEGER total
+        TEXT currency
+        TEXT created_at
+        TEXT expires_at
+    }
+    hold_seats {
+        TEXT hold_id PK
+        TEXT seat_id PK
+    }
+    payments {
+        TEXT payment_id PK
+        TEXT hold_id FK
+        TEXT token
+        TEXT scenario
+        TEXT result
+        INTEGER amount
+    }
+    audit_log {
+        INTEGER id PK
+        TEXT hold_id
+        TEXT seat_id
+        TEXT from_state
+        TEXT to_state
+        TEXT reason
+        TEXT timestamp
+    }
+    idempotency_keys {
+        TEXT key PK
+        TEXT payload_hash
+        TEXT hold_id
+        TEXT response_json
+    }
+    recurrences {
+        TEXT recurrence_id PK
+        TEXT hold_id FK
+        INTEGER installments_total
+        INTEGER installments_paid
+        TEXT status
+        INTEGER amount_per_installment
+    }
+  </div>
+</section>
+
+<!-- HISTIAS DE USUARIO -->
+<section id="historias">
+  <h2>Historias de usuario</h2>
+
+  <div class="card">
+    <h3>HU-1: Reservar asientos</h3>
+    <p><strong>Como</strong> comprador, <strong>quiero</strong> seleccionar asientos y reservarlos temporalmente, <strong>para</strong> asegurarlos mientras decido pagar.</p>
+    <p><strong>Criterios de aceptación:</strong></p>
+    <ul>
+      <li>Puedo seleccionar 1 o más asientos disponibles.</li>
+      <li>Si todos están disponibles, se crea la reserva (HOLD).</li>
+      <li>Si alguno no está disponible, la reserva falla completa (todo o nada).</li>
+      <li>No puedo tener más de 6 asientos reservados a la vez.</li>
+      <li>La reserva expira automáticamente después de 120 segundos.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>HU-2: Confirmar compra</h3>
+    <p><strong>Como</strong> comprador, <strong>quiero</strong> confirmar mi reserva con un pago, <strong>para</strong> finalizar la compra.</p>
+    <p><strong>Criterios de aceptación:</strong></p>
+    <ul>
+      <li>Puedo elegir el escenario de pago (aprobado, rechazado, error, timeout).</li>
+      <li>Si el pago es aprobado, los asientos pasan a SOLD.</li>
+      <li>Si el pago es rechazado, los asientos vuelven a AVAILABLE.</li>
+      <li>Si hay error o timeout, los asientos se mantienen HELD y puedo reintentar.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>HU-3: Concurrencia segura</h3>
+    <p><strong>Como</strong> sistema, <strong>quiero</strong> garantizar que dos usuarios no reserven el mismo asiento, <strong>para</strong> evitar sobreventa.</p>
+    <p><strong>Criterios de aceptación:</strong></p>
+    <ul>
+      <li>Si 100 usuarios piden el mismo asiento, exactamente 1 lo consigue.</li>
+      <li>Los 99 restantes reciben un rechazo claro.</li>
+      <li>No hay overselling (0 ventas duplicadas).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>HU-4: Idempotencia (reintentos seguros)</h3>
+    <p><strong>Como</strong> cliente móvil, <strong>quiero</strong> reintentar una operación sin efectos secundarios, <strong>para</strong> no crear reservas duplicadas.</p>
+    <p><strong>Criterios de aceptación:</strong></p>
+    <ul>
+      <li>Si envío la misma solicitud con la misma Idempotency-Key, obtengo el mismo resultado.</li>
+      <li>Si envío una solicitud diferente con la misma clave, recibo un conflicto (409).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>HU-5: Pago recurrente (cuotas)</h3>
+    <p><strong>Como</strong> comprador, <strong>quiero</strong> pagar en cuotas, <strong>para</strong> diferir el pago de mis entradas.</p>
+    <p><strong>Criterios de aceptación:</strong></p>
+    <ul>
+      <li>Al confirmar con RECURRENCE, se crea un plan de 3 cuotas.</li>
+      <li>La primera cuota se cobra al confirmar.</li>
+      <li>Puedo simular el cobro de las siguientes cuotas desde la UI.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>HU-6: Juez simula una reserva</h3>
+    <p><strong>Como</strong> juez, <strong>quiero</strong> probar el sistema sin usar curl ni Postman, <strong>para</strong> verificar los escenarios del reto.</p>
+    <p><strong>Criterios de aceptación:</strong></p>
+    <ul>
+      <li>Puedo ver el mapa de asientos con colores.</li>
+      <li>Puedo reservar y pagar desde la interfaz.</li>
+      <li>Puedo simular una carrera de múltiples compradores.</li>
+      <li>Puedo simular una reserva completa con un solo clic.</li>
+      <li>Puedo ver la trazabilidad de cada reserva.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>HU-7: Trazabilidad</h3>
+    <p><strong>Como</strong> operador, <strong>quiero</strong> ver el historial de cambios de estado de una reserva, <strong>para</strong> explicar por qué un asiento terminó AVAILABLE, HELD o SOLD.</p>
+    <p><strong>Criterios de aceptación:</strong></p>
+    <ul>
+      <li>Cada cambio de estado se registra con timestamp y motivo.</li>
+      <li>Puedo consultar el historial completo de una reserva desde la UI.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- TABLAS -->
+<section id="tablas">
+  <h2>Tablas del sistema</h2>
+
+  <h3>Tabla: seats (asientos)</h3>
+  <table>
+    <tr><th>Columna</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td>seat_id</td><td>TEXT PK</td><td>Identificador (ej. VIP-A-001)</td></tr>
+    <tr><td>section</td><td>TEXT</td><td>Sección (VIP o GENERAL)</td></tr>
+    <tr><td>price</td><td>INTEGER</td><td>Precio en COP</td></tr>
+    <tr><td>currency</td><td>TEXT</td><td>Moneda (COP)</td></tr>
+    <tr><td>status</td><td>TEXT</td><td>AVAILABLE, HELD o SOLD</td></tr>
+    <tr><td>version</td><td>INTEGER</td><td>Optimistic lock</td></tr>
+  </table>
+
+  <h3>Tabla: holds (reservas temporales)</h3>
+  <table>
+    <tr><th>Columna</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td>hold_id</td><td>TEXT PK</td><td>Identificador de la reserva</td></tr>
+    <tr><td>user_id</td><td>TEXT</td><td>Usuario que reserva</td></tr>
+    <tr><td>event_id</td><td>TEXT</td><td>Evento (aurora-bogota-2026)</td></tr>
+    <tr><td>status</td><td>TEXT</td><td>HELD, EXPIRED, RELEASED o SOLD</td></tr>
+    <tr><td>total</td><td>INTEGER</td><td>Total calculado por el servidor</td></tr>
+    <tr><td>created_at</td><td>TEXT</td><td>Fecha de creación</td></tr>
+    <tr><td>expires_at</td><td>TEXT</td><td>Fecha de expiración</td></tr>
+  </table>
+
+  <h3>Tabla: audit_log (trazabilidad)</h3>
+  <table>
+    <tr><th>Columna</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td>id</td><td>INTEGER PK</td><td>Autoincrement</td></tr>
+    <tr><td>hold_id</td><td>TEXT</td><td>Reserva afectada</td></tr>
+    <tr><td>seat_id</td><td>TEXT</td><td>Asiento afectado</td></tr>
+    <tr><td>from_state</td><td>TEXT</td><td>Estado anterior</td></tr>
+    <tr><td>to_state</td><td>TEXT</td><td>Estado nuevo</td></tr>
+    <tr><td>reason</td><td>TEXT</td><td>Motivo (hold_created, payment_approved, etc.)</td></tr>
+    <tr><td>timestamp</td><td>TEXT</td><td>Momento del cambio</td></tr>
+  </table>
+
+  <h3>Tabla: payments (pagos)</h3>
+  <table>
+    <tr><th>Columna</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td>payment_id</td><td>TEXT PK</td><td>Identificador del pago</td></tr>
+    <tr><td>hold_id</td><td>TEXT FK</td><td>Reserva asociada</td></tr>
+    <tr><td>scenario</td><td>TEXT</td><td>Escenario simulado</td></tr>
+    <tr><td>result</td><td>TEXT</td><td>APPROVED, DECLINED, ERROR, TIMEOUT</td></tr>
+    <tr><td>amount</td><td>INTEGER</td><td>Monto cobrado</td></tr>
+  </table>
+
+  <h3>Tabla: recurrences (pagos recurrentes)</h3>
+  <table>
+    <tr><th>Columna</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td>recurrence_id</td><td>TEXT PK</td><td>Identificador del plan</td></tr>
+    <tr><td>hold_id</td><td>TEXT FK</td><td>Reserva asociada</td></tr>
+    <tr><td>installments_total</td><td>INTEGER</td><td>Cuotas totales (3)</td></tr>
+    <tr><td>installments_paid</td><td>INTEGER</td><td>Cuotas pagadas</td></tr>
+    <tr><td>amount_per_installment</td><td>INTEGER</td><td>Monto por cuota</td></tr>
+    <tr><td>status</td><td>TEXT</td><td>ACTIVE, COMPLETED o FAILED</td></tr>
+  </table>
+
+  <h3>Tabla: idempotency_keys (reintentos seguros)</h3>
+  <table>
+    <tr><th>Columna</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td>key</td><td>TEXT PK</td><td>Clave de idempotencia</td></tr>
+    <tr><td>payload_hash</td><td>TEXT</td><td>Hash del payload (SHA-256)</td></tr>
+    <tr><td>hold_id</td><td>TEXT</td><td>Reserva creada</td></tr>
+    <tr><td>response_json</td><td>TEXT</td><td>Respuesta cacheada</td></tr>
+  </table>
+</section>
+
+<!-- PAGO -->
+<section id="pago">
+  <h2>Servicio dummy de pago</h2>
+  <p>
+    El sistema no se conecta a un proveedor real. En su lugar usa un <strong>servicio dummy</strong>
+    (<code>mock_payment_authorize</code>) que simula los diferentes escenarios. El escenario
+    se elige desde el menú desplegable debajo del botón PAGAR.
+  </p>
+
+  <div class="mermaid">
+flowchart TD
+    A[Botón PAGAR] --> B[Leer escenario del selector]
+    B --> C{Escenario}
+    C -- APPROVED --> D["{result: APPROVED, auth_code: ...}"]
+    C -- DECLINED --> E["{result: DECLINED, reason: insufficient_funds}"]
+    C -- ERROR --> F["{result: ERROR, reason: provider_500}"]
+    C -- TIMEOUT --> G["{result: TIMEOUT} (latencia > 2s)"]
+    C -- RECURRENCE --> H["{result: APPROVED, recurring: true}"]
+    C -- AUTO --> I["70% approved / 10% declined / 10% error / 10% timeout"]
+    D --> J[HELD → SOLD]
+    E --> K[HELD → AVAILABLE]
+    F --> L[HELD se mantiene]
+    G --> L
+    H --> M[HELD → SOLD + crear 3 cuotas]
+  </div>
+
+  <h3>Endpoints de la API</h3>
+  <table>
+    <tr><th>Método</th><th>Ruta</th><th>Para qué</th></tr>
+    <tr><td>GET</td><td>/</td><td>Interfaz web</td></tr>
+    <tr><td>GET</td><td>/api/seats</td><td>Ver asientos</td></tr>
+    <tr><td>POST</td><td>/api/holds</td><td>Crear reserva</td></tr>
+    <tr><td>GET</td><td>/api/holds/&lt;id&gt;</td><td>Consultar reserva</td></tr>
+    <tr><td>DELETE</td><td>/api/holds/&lt;id&gt;</td><td>Liberar reserva</td></tr>
+    <tr><td>POST</td><td>/api/holds/&lt;id&gt;/confirm</td><td>Confirmar pago</td></tr>
+    <tr><td>POST</td><td>/api/simulate/race</td><td>Simular carrera</td></tr>
+    <tr><td>GET</td><td>/api/queue/stats</td><td>Estado de la cola</td></tr>
+    <tr><td>GET</td><td>/api/circuit-breaker</td><td>Estado del circuit breaker</td></tr>
+    <tr><td>GET</td><td>/api/audit/&lt;id&gt;</td><td>Trazabilidad</td></tr>
+    <tr><td>POST</td><td>/api/recurrences/&lt;id&gt;/charge</td><td>Cobrar siguiente cuota</td></tr>
+  </table>
+</section>
+
+</main>
+
+<footer>
+  <p>NEXUS LIVE // T-80 — Samuel Ardila — Grupo 3 — Hackathon Huawei Colombia</p>
+</footer>
+
+</body>
+</html>

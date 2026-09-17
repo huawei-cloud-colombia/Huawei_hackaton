@@ -1,0 +1,26 @@
+# Prompts utilizados con GLM 5.2 durante el desarrollo
+
+## Prompt 1 — Arquitectura
+"Consumo completo el RETO_3_NEXUS_LIVE.md, itera en sus puntos. Para la concurrencia propongo colas, la cola solo permitira 50 sesiones concurrentes (punto dulce). Para la simulacion del pago definamos un servicio dummy que simule los diferentes escenarios, debajo del boton pagar se puede escoger el escenario. Eres un arquitecto experto en Python, Flask, HTML, JavaScript, CSS, SQLite. Genera todos los pasos a seguir para un rol desarrollador (desarrollar.MD). Recuerda que debemos simular recurrencia y que los jueces pueden acceder a simular una reserva."
+
+## Prompt 2 — Implementación paso a paso
+"Si empecemos, los pasos, audita cada paso para verificar que cumpla con el objetivo."
+
+## Decisiones de diseño
+
+1. **Cola de 50 sesiones:** El equipo propuso colas para concurrencia. GLM 5.2 implementó SessionQueue con ThreadPoolExecutor(50) + BoundedSemaphore. El punto dulce de 50 fue decisión del equipo, no del modelo.
+
+2. **Circuit Breaker con RLock:** GLM 5.2 usó inicialmente threading.Lock(). El audit detectó un deadlock porque allow_request() llamaba self.state que también adquiría el lock. Se corrigió a RLock (reentrant).
+
+3. **Colisión de nombres "status":** Los servicios usaban "status" para HTTP code en errores y para estado de dominio en éxitos. El audit detectó que el route handler extraía "SOLD" como HTTP code. Se separó: solo se pop "status" cuando hay "error".
+
+4. **Recurrencia:** El equipo pidió simular recurrencia. GLM 5.2 propuso modelo de cuotas (3 installments). El equipo aprobó.
+
+5. **Selector de escenario debajo del botón Pagar:** Decisión del equipo. GLM 5.2 lo implementó como <select> en el HTML.
+
+## Errores encontrados con ayuda del agente
+
+- Deadlock en CircuitBreaker por Lock no reentrante (detectado en audit del Paso 4).
+- IndexError en recurrence_service.charge_next por falta de interval_days en SELECT (detectado en audit del Paso 4).
+- Colisión de "status" entre HTTP code y domain status (detectado en audit del Paso 5).
+- Config global HOLD_TTL_SECONDS modificado por test_expiracion_automatica contaminaba tests posteriores (detectado en audit del Paso 6).
