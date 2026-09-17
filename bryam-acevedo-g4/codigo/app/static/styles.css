@@ -1,0 +1,106 @@
+:root {
+  --bg: #0f1117;
+  --panel: #171a23;
+  --border: #2a2e3a;
+  --text: #e6e8ee;
+  --muted: #8b90a0;
+  --green: #2ecc71;
+  --yellow: #f1c40f;
+  --red: #e74c3c;
+  --accent: #6c8cff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  padding: 24px 32px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 { margin: 0 0 4px; }
+.subtitle { color: var(--muted); margin: 0; }
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 24px 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.burst-panel { grid-column: 1 / -1; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+input {
+  background: #0c0e14;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+button[type="submit"] { background: var(--accent); color: white; }
+button.secondary { background: #3a3f52; color: var(--text); }
+button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+.empty { color: var(--muted); font-style: italic; }
+.hidden { display: none; }
+
+.score-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+.score { font-size: 36px; font-weight: 700; }
+.score-max { color: var(--muted); }
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+.badge.APPROVE { background: rgba(46, 204, 113, 0.2); color: var(--green); }
+.badge.REVIEW { background: rgba(241, 196, 15, 0.2); color: var(--yellow); }
+.badge.DECLINE { background: rgba(231, 76, 60, 0.2); color: var(--red); }
+
+#reasons-list { padding-left: 18px; }
+#reasons-list li { margin-bottom: 6px; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 14px; }
+tr.APPROVE td.decision-cell { color: var(--green); font-weight: 700; }
+tr.REVIEW td.decision-cell { color: var(--yellow); font-weight: 700; }
+tr.DECLINE td.decision-cell { color: var(--red); font-weight: 700; }

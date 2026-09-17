@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SentinelPay Risk Engine</title>
+<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>🛡️ SentinelPay Risk Engine</h1>
+    <p class="subtitle">Motor de scoring de riesgo en tiempo real — verificación sin curl ni Postman</p>
+  </header>
+
+  <main>
+    <section class="panel form-panel">
+      <h2>Evaluar transacción</h2>
+      <form id="txn-form">
+        <label>Card ID <input name="card_id" value="card_9F21" required /></label>
+        <label>Merchant ID <input name="merchant_id" value="merch_petshop_bog" required /></label>
+        <label>Amount <input name="amount" type="number" step="0.01" value="850000" required /></label>
+        <label>Currency <input name="currency" value="COP" required /></label>
+        <label>Country (tarjeta) <input name="country" value="CO" required /></label>
+        <label>IP Country <input name="ip_country" value="RU" required /></label>
+        <label>Device ID <input name="device_id" value="dev_a19x" required /></label>
+        <label>IP <input name="ip" value="185.220.101.14" required /></label>
+
+        <div class="actions">
+          <button type="submit">Evaluar</button>
+          <button type="button" id="burst-btn" class="secondary">Simular ráfaga (6x)</button>
+          <button type="button" id="reset-btn" class="ghost">Reset estado</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel result-panel">
+      <h2>Resultado</h2>
+      <div id="result-empty" class="empty">Envía una transacción para ver el resultado aquí.</div>
+      <div id="result-card" class="hidden">
+        <div class="score-row">
+          <span id="decision-badge" class="badge">APPROVE</span>
+          <span id="score-value" class="score">0</span>
+          <span class="score-max">/100</span>
+        </div>
+        <p><strong>Bank auth status:</strong> <span id="bank-status">—</span></p>
+        <h3>Razones</h3>
+        <ul id="reasons-list"></ul>
+      </div>
+    </section>
+
+    <section class="panel burst-panel">
+      <h2>Historial de ráfaga</h2>
+      <div id="burst-empty" class="empty">Usa "Simular ráfaga (6x)" para ver aquí cómo el sistema bloquea el "card testing" en vivo.</div>
+      <table id="burst-table" class="hidden">
+        <thead>
+          <tr><th>#</th><th>Score</th><th>Decisión</th><th>Razón principal</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
