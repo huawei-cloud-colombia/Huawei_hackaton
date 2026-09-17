@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SeatLock — Reserva de Entradas</title>
+<style>
+  :root { --bg:#0f1222; --panel:#171a2e; --ink:#e6e8f0; --muted:#8b90ad;
+          --accent:#5b8cff; --ok:#3ecf8e; --warn:#f5a623; --bad:#ff5c7a;
+          --av:#3ecf8e; --held:#f5a623; --sold:#ff5c7a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:14px 20px; background:var(--panel); border-bottom:1px solid #232842; display:flex; gap:16px; align-items:center; }
+  header h1 { font-size:18px; margin:0; }
+  header .sub { color:var(--muted); font-size:13px; }
+  .wrap { display:grid; grid-template-columns: 280px 1fr 340px; gap:14px; padding:14px; height:calc(100vh - 56px); }
+  .card { background:var(--panel); border:1px solid #232842; border-radius:10px; padding:14px; overflow:auto; }
+  h2 { font-size:14px; margin:0 0 10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  label { display:block; font-size:12px; color:var(--muted); margin:8px 0 3px; }
+  input, select { width:100%; padding:8px; border-radius:6px; border:1px solid #2c3155; background:#11142a; color:var(--ink); font-size:13px; }
+  button { width:100%; padding:9px; margin-top:8px; border:none; border-radius:6px; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; font-size:13px; }
+  button:hover { filter:brightness(1.1); }
+  button.ghost { background:transparent; border:1px solid #2c3155; color:var(--ink); }
+  button.danger { background:var(--bad); }
+  button.ok { background:var(--ok); }
+  .row { display:flex; gap:8px; }
+  .row > * { flex:1; }
+  .legend { display:flex; gap:12px; font-size:12px; margin-bottom:10px; color:var(--muted); }
+  .legend span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:middle; }
+  .av-dot::before { background:var(--av); } .held-dot::before { background:var(--held); } .sold-dot::before { background:var(--sold); }
+  .grid { display:grid; grid-template-columns:repeat(10, 1fr); gap:6px; }
+  .seat { aspect-ratio:1; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; user-select:none; border:2px solid transparent; }
+  .seat.AVAILABLE { background:var(--av); color:#062; }
+  .seat.HELD { background:var(--held); color:#321; }
+  .seat.SOLD { background:var(--sold); color:#fff; }
+  .seat.sel { border-color:#fff; box-shadow:0 0 0 2px var(--accent); }
+  .section-title { font-size:12px; color:var(--muted); margin:12px 0 4px; }
+  #log { font-family:ui-monospace,Consolas,monospace; font-size:12px; line-height:1.5; }
+  .log-line { padding:2px 0; border-bottom:1px solid #1d2240; white-space:pre-wrap; word-break:break-word; }
+  .okc { color:var(--ok); } .badc { color:var(--bad); } .warnc { color:var(--warn); } .mutc { color:var(--muted); }
+  .stat { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+  .stat.AVAILABLE { background:var(--av); color:#062; }
+  .stat.HELD { background:var(--held); color:#321; }
+  .stat.SOLD { background:var(--sold); color:#fff; }
+  .stat.REJECTED { background:#444; color:#fff; }
+  .holdbox { background:#11142a; border:1px solid #2c3155; border-radius:6px; padding:8px; margin-top:8px; font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SeatLock</h1>
+  <span class="sub">AVAILABLE → HELD → SOLD · reservas temporales con expiración</span>
+  <span class="sub" id="cfg"></span>
+</header>
+<div class="wrap">
+  <div class="card">
+    <h2>Controles</h2>
+    <label>Event ID</label>
+    <input id="event_id" value="aurora-bogota-2026" />
+    <label>User ID</label>
+    <input id="user_id" value="usr_10482" />
+    <label>Asientos seleccionados</label>
+    <input id="selected" readonly placeholder="clic en asientos" />
+    <button onclick="loadSeats()">Consultar asientos</button>
+    <button onclick="createHold()">Crear HOLD</button>
+
+    <h2 style="margin-top:16px;">Hold existente</h2>
+    <label>Hold ID</label>
+    <input id="hold_id" placeholder="hold_XXXX" />
+    <div class="row">
+      <button class="ghost" onclick="viewHold()">Ver</button>
+      <button class="ghost" onclick="releaseHold()">Liberar</button>
+      <button class="ok" onclick="confirmHold()">Confirmar</button>
+    </div>
+
+    <h2 style="margin-top:16px;">Test concurrencia</h2>
+    <label>Asientos a disputar (separados por coma)</label>
+    <input id="race_seats" value="A-101,A-102" />
+    <label>Número de compradores simultáneos</label>
+    <input id="race_n" type="number" value="10" />
+    <button class="danger" onclick="raceTest()">Disputar el mismo asiento</button>
+  </div>
+
+  <div class="card">
+    <h2>Mapa de asientos</h2>
+    <div class="legend">
+      <span class="av-dot">AVAILABLE</span>
+      <span class="held-dot">HELD</span>
+      <span class="sold-dot">SOLD</span>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <div class="card">
+    <h2>Registro</h2>
+    <div id="log"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const selected = new Set();
+let seatsCache = [];
+
+function log(msg, cls) {
+  const el = $("log");
+  const line = document.createElement("div");
+  line.className = "log-line " + (cls||"");
+  line.textContent = msg;
+  el.prepend(line);
+}
+function statBadge(s){ return `<span class="stat ${s}">${s}</span>`; }
+
+async function api(method, url, body) {
+  const opt = { method, headers: {"Content-Type":"application/json"} };
+  if (body) opt.body = JSON.stringify(body);
+  const res = await fetch(url, opt);
+  let data = null;
+  try { data = await res.json(); } catch(e){}
+  return { ok: res.ok, status: res.status, data };
+}
+
+async function loadConfig(){
+  const { data } = await api("GET", "/config");
+  if (data) $("cfg").textContent = `ttl=${data.hold_ttl_seconds}s · max=${data.max_seats_per_user} asientos`;
+}
+
+async function loadSeats(){
+  const ev = $("event_id").value;
+  const { ok, data } = await api("GET", `/events/${encodeURIComponent(ev)}/seats`);
+  if (!ok){ log("Error al consultar: " + JSON.stringify(data), "badc"); return; }
+  seatsCache = data;
+  renderMap();
+  log(`Consultados ${data.length} asientos para ${ev}`, "mutc");
+}
+
+function renderMap(){
+  const map = $("map");
+  map.innerHTML = "";
+  const bySection = {};
+  for (const s of seatsCache){ (bySection[s.section] ||= []).push(s); }
+  for (const sec of Object.keys(bySection)){
+    const t = document.createElement("div");
+    t.className = "section-title";
+    t.textContent = sec;
+    map.appendChild(t);
+    const g = document.createElement("div");
+    g.className = "grid";
+    for (const s of bySection[sec]){
+      const el = document.createElement("div");
+      el.className = `seat ${s.status}` + (selected.has(s.seat_id) ? " sel" : "");
+      el.textContent = s.seat_id;
+      el.title = `${s.seat_id} · ${s.status} · ${s.price} ${s.currency}`;
+      el.onclick = () => toggleSeat(s.seat_id);
+      g.appendChild(el);
+    }
+    map.appendChild(g);
+  }
+  $("selected").value = [...selected].join(", ");
+}
+
+function toggleSeat(id){
+  if (selected.has(id)) selected.delete(id); else selected.add(id);
+  renderMap();
+}
+
+async function createHold(){
+  const seat_ids = [...selected];
+  if (!seat_ids.length){ log("Selecciona al menos un asiento", "warnc"); return; }
+  const body = { user_id: $("user_id").value, event_id: $("event_id").value, seat_ids };
+  log(`POST /holds ${JSON.stringify(body)}`, "mutc");
+  const { ok, status, data } = await api("POST", "/holds", body);
+  if (ok){
+    log(`HOLD creado ${data.hold_id} · ${statBadge(data.status)} · ${data.seat_ids.join(",")} · ${data.total} ${data.currency} · expira ${data.expires_at}`, "okc");
+    $("hold_id").value = data.hold_id;
+  } else {
+    log(`REJECTED (${status}) reason=${data.reason} · ${data.detail}${data.conflicting_seats?" · seats="+data.conflicting_seats.join(","):""}`, "badc");
+  }
+  selected.clear();
+  await loadSeats();
+}
+
+async function viewHold(){
+  const id = $("hold_id").value;
+  const { ok, data } = await api("GET", `/holds/${encodeURIComponent(id)}`);
+  if (!ok){ log(`Hold ${id} no encontrado`, "badc"); return; }
+  log(`Hold ${id} ${statBadge(data.status)} · user=${data.user_id} · ${data.seat_ids.join(",")} · ${data.total} ${data.currency} · expira ${data.expires_at}`, "okc");
+}
+
+async function releaseHold(){
+  const id = $("hold_id").value;
+  const user_id = $("user_id").value;
+  log(`DELETE /holds/${id}?user_id=${user_id}`, "mutc");
+  const { ok, status, data } = await api("DELETE", `/holds/${encodeURIComponent(id)}?user_id=${encodeURIComponent(user_id)}`);
+  if (ok){ log(`Hold ${id} liberado ${statBadge(data.status)}`, "okc"); }
+  else { log(`REJECTED (${status}) reason=${data.reason} · ${data.detail}`, "badc"); }
+  await loadSeats();
+}
+
+async function confirmHold(){
+  const id = $("hold_id").value;
+  const user_id = $("user_id").value;
+  log(`POST /holds/${id}/confirm`, "mutc");
+  const { ok, status, data } = await api("POST", `/holds/${encodeURIComponent(id)}/confirm`, { user_id });
+  if (ok){ log(`SOLD ${data.hold_id} · ${data.seat_ids.join(",")} · ${data.total} ${data.currency}`, "okc"); }
+  else { log(`REJECTED (${status}) reason=${data.reason} · ${data.detail}`, "badc"); }
+  await loadSeats();
+}
+
+async function raceTest(){
+  const seat_ids = $("race_seats").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const n = parseInt($("race_n").value, 10) || 10;
+  log(`Disputa: ${n} compradores piden ${seat_ids.join(",")} a la vez`, "warnc");
+  const ev = $("event_id").value;
+  const tasks = [];
+  for (let i=0;i<n;i++){
+    const uid = `usr_race_${i}`;
+    tasks.push(api("POST","/holds",{user_id:uid,event_id:ev,seat_ids}));
+  }
+  const results = await Promise.all(tasks);
+  let wins = 0, rejects = 0;
+  for (let i=0;i<results.length;i++){
+    const r = results[i];
+    if (r.ok){ wins++; log(`#${i} usr_race_${i} → HOLD ${r.data.hold_id}`, "okc"); }
+    else { rejects++; log(`#${i} usr_race_${i} → REJECTED ${r.data.reason}`, "badc"); }
+  }
+  log(`Resultado: ${wins} HOLD creados, ${rejects} REJECTED (debe haber exactamente 1 HOLD)`, "warnc");
+  await loadSeats();
+}
+
+loadConfig(); loadSeats();
+setInterval(loadSeats, 4000);
+</script>
+</body>
+</html>

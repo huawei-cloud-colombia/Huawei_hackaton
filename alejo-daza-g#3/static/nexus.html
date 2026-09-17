@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NEXUS Live — Panel de Reservas</title>
+<style>
+  :root { --bg:#0b0e1a; --panel:#141829; --panel2:#1b2038; --ink:#e8eaf3; --muted:#8a90b0;
+          --accent:#5b8cff; --ok:#3ecf8e; --warn:#f5a623; --bad:#ff5c7a; --line:#262c4d;
+          --av:#3ecf8e; --held:#f5a623; --sold:#ff5c7a; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:12px 18px; background:var(--panel); border-bottom:1px solid var(--line); display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:17px; margin:0; }
+  header .sub { color:var(--muted); font-size:12px; }
+  .pill { padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; }
+  .pill.CLOSED { background:var(--ok); color:#062; } .pill.OPEN { background:var(--bad); color:#fff; } .pill.HALF_OPEN { background:var(--warn); color:#321; }
+  .wrap { display:grid; grid-template-columns:230px 1fr 330px; gap:12px; padding:12px; height:calc(100vh - 54px); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; overflow:auto; }
+  h2 { font-size:12px; margin:0 0 8px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+  label { display:block; font-size:11px; color:var(--muted); margin:7px 0 2px; }
+  input, select { width:100%; padding:7px; border-radius:6px; border:1px solid #2c3155; background:#0e1226; color:var(--ink); font-size:12px; }
+  button { width:100%; padding:8px; margin-top:7px; border:none; border-radius:6px; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; font-size:12px; }
+  button:hover { filter:brightness(1.1); } button:disabled { opacity:.5; cursor:not-allowed; }
+  button.ghost { background:transparent; border:1px solid #2c3155; color:var(--ink); }
+  button.ok { background:var(--ok); color:#062; } button.warn { background:var(--warn); color:#321; } button.danger { background:var(--bad); }
+  .row { display:flex; gap:7px; } .row > * { flex:1; }
+  .legend { display:flex; gap:12px; font-size:11px; color:var(--muted); margin-bottom:8px; }
+  .legend span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:middle; }
+  .av-d::before { background:var(--av); } .held-d::before { background:var(--held); } .sold-d::before { background:var(--sold); }
+  .grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+  .seat { aspect-ratio:1.7; border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10px; cursor:pointer; user-select:none; border:2px solid transparent; position:relative; }
+  .seat.AVAILABLE { background:var(--av); color:#062; } .seat.HELD { background:var(--held); color:#321; } .seat.SOLD { background:var(--sold); color:#fff; }
+  .seat.sel { border-color:#fff; box-shadow:0 0 0 2px var(--accent); }
+  .seat .who { font-size:8px; opacity:.85; }
+  .sessions { display:flex; flex-direction:column; gap:6px; }
+  .sess { padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--panel2); cursor:pointer; }
+  .sess.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+  .sess .uname { font-size:12px; font-weight:600; } .sess .meta { font-size:10px; color:var(--muted); }
+  .hold { background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:8px; font-size:11px; }
+  .hold .hid { font-weight:600; color:var(--accent); word-break:break-all; }
+  .hold .cntdown { color:var(--warn); font-weight:600; }
+  .stat { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10px; font-weight:600; }
+  .stat.AVAILABLE { background:var(--av); color:#062; } .stat.HELD { background:var(--warn); color:#321; } .stat.SOLD { background:var(--sold); color:#fff; }
+  .stat.EXPIRED,.stat.RELEASED { background:#444; color:#fff; } .stat.REJECTED { background:#555; color:#fff; }
+  #log { font-family:ui-monospace,Consolas,monospace; font-size:11px; line-height:1.5; }
+  .log-line { padding:2px 0; border-bottom:1px solid #1a1f3a; white-space:pre-wrap; word-break:break-word; }
+  .okc { color:var(--ok); } .badc { color:var(--bad); } .warnc { color:var(--warn); } .mutc { color:var(--muted); }
+  .race-result { background:#0e1226; border:1px solid var(--line); border-radius:8px; padding:10px; margin-top:8px; font-size:11px; }
+  .big { font-size:15px; font-weight:700; }
+  details { margin-top:8px; } summary { cursor:pointer; color:var(--muted); font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>NEXUS Live</h1>
+  <span class="sub" id="cfg"></span>
+  <span class="sub">CB:</span><span id="cb" class="pill CLOSED">CLOSED</span>
+  <span class="sub">Pago:</span>
+  <select id="paymode" style="width:auto" onchange="setPayMode(this.value)">
+    <option value="random">random</option><option value="always_approved">always_approved</option>
+    <option value="always_declined">always_declined</option><option value="always_error">always_error</option>
+    <option value="always_timeout">always_timeout</option>
+  </select>
+</header>
+<div class="wrap">
+  <!-- SESIONES -->
+  <div class="card">
+    <h2>Sesiones de usuario</h2>
+    <div class="sessions" id="sessions"></div>
+    <h2 style="margin-top:14px;">Filtros</h2>
+    <label>Sección</label>
+    <select id="section" onchange="loadSeats()">
+      <option value="PREMIUM" selected>PREMIUM (VIP-A)</option>
+      <option value="VIP">VIP</option><option value="PLATEA">PLATEA</option><option value="GENERAL">GENERAL</option>
+    </select>
+    <label>Event ID</label>
+    <input id="event_id" value="aurora-bogota-2026" />
+    <button class="ghost" onclick="loadSeats()">Refrescar asientos</button>
+    <button class="ghost" onclick="loadTrace()">Ver trazabilidad</button>
+  </div>
+
+  <!-- MAPA -->
+  <div class="card">
+    <h2>Mapa de asientos — sesión activa: <span id="activeUser" style="color:var(--accent)"></span></h2>
+    <div class="legend"><span class="av-d">AVAILABLE</span><span class="held-d">HELD</span><span class="sold-d">SOLD</span></div>
+    <div id="map"></div>
+
+    <h2 style="margin-top:14px;">Simular carrera (concurrencia)</h2>
+    <label>Asiento a disputar</label>
+    <input id="race_seat" value="VIP-A-001" />
+    <label>Número de usuarios simultáneos</label>
+    <input id="race_n" type="number" value="20" />
+    <button class="danger" onclick="raceTest()">SIMULAR N USUARIOS POR ESTE ASIENTO</button>
+    <div id="raceResult"></div>
+  </div>
+
+  <!-- PANEL DERECHO -->
+  <div class="card">
+    <h2>Reserva — <span id="activeUser2"></span></h2>
+    <label>Asientos seleccionados</label>
+    <input id="selected" readonly placeholder="clic en asientos del mapa" />
+    <label>Total (calculado por el servidor al reservar)</label>
+    <input id="totalEst" readonly placeholder="—" />
+    <label>Idempotency-Key (auto si vacío)</label>
+    <input id="idemKey" placeholder="opcional" />
+    <button onclick="createHold()">Crear HOLD</button>
+
+    <h2 style="margin-top:14px;">Holds de la sesión</h2>
+    <div id="holds"></div>
+
+    <h2 style="margin-top:14px;">Confirmar compra</h2>
+    <label>Hold ID</label>
+    <input id="co_hold" placeholder="hold_..." />
+    <label>Payment token</label>
+    <div class="row">
+      <input id="pay_token" value="tok_test_91827" />
+      <button class="ghost" style="width:auto" onclick="genToken()">Generar</button>
+    </div>
+    <button class="ok" onclick="confirmPurchase()">Confirmar (checkout)</button>
+    <button class="warn" onclick="releaseHold()">Liberar hold</button>
+
+    <h2 style="margin-top:14px;">Registro</h2>
+    <div id="log"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const EVENT = () => $("event_id").value;
+let seatsCache = [];
+let seatPrice = {};
+const sessions = [
+  { label: "Sesión A", user_id: "usr_juez_a", selected: new Set(), holds: [] },
+  { label: "Sesión B", user_id: "usr_juez_b", selected: new Set(), holds: [] },
+  { label: "Sesión C", user_id: "usr_juez_c", selected: new Set(), holds: [] },
+];
+let active = 0;
+
+function log(msg, cls) {
+  const el = $("log"); const line = document.createElement("div");
+  line.className = "log-line " + (cls || ""); line.textContent = msg; el.prepend(line);
+}
+const S = () => sessions[active];
+
+async function api(method, url, body, headers) {
+  const opt = { method, headers: { "Content-Type": "application/json", ...(headers || {}) } };
+  if (body) opt.body = JSON.stringify(body);
+  const res = await fetch(url, opt);
+  let data = null; try { data = await res.json(); } catch (e) {}
+  return { ok: res.ok, status: res.status, data };
+}
+
+function renderSessions() {
+  const el = $("sessions"); el.innerHTML = "";
+  sessions.forEach((s, i) => {
+    const d = document.createElement("div");
+    d.className = "sess" + (i === active ? " active" : "");
+    d.onclick = () => { active = i; renderSessions(); renderMap(); renderHolds(); updateActive(); };
+    d.innerHTML = `<div class="uname">${s.label}</div>
+      <div class="meta">user_id</div>
+      <input value="${s.user_id}" onclick="event.stopPropagation()" oninput="sessions[${i}].user_id=this.value;updateActive()" style="margin-top:3px">`;
+    el.appendChild(d);
+  });
+  updateActive();
+}
+function updateActive() {
+  $("activeUser").textContent = S().user_id;
+  $("activeUser2").textContent = S().user_id;
+}
+
+async function loadConfig() {
+  const { data } = await api("GET", "/config");
+  if (data) $("cfg").textContent = `asientos=${data.total_seats} · ttl=${data.hold_ttl_seconds}s · max=${data.max_seats_per_user} · shards=${data.num_shards}`;
+}
+
+async function loadCB() {
+  const { data } = await api("GET", "/admin/circuit-breaker");
+  if (data) { const e = $("cb"); e.textContent = data.state; e.className = "pill " + data.state; }
+}
+
+async function loadSeats() {
+  const sec = $("section").value;
+  const { ok, data } = await api("GET", `/events/${encodeURIComponent(EVENT())}/seats?section=${sec}&limit=200`);
+  if (!ok) { log("Error al consultar asientos: " + JSON.stringify(data), "badc"); return; }
+  seatsCache = data;
+  seatPrice = {}; data.forEach(s => seatPrice[s.seat_id] = s.price);
+  renderMap();
+}
+
+function renderMap() {
+  const map = $("map"); map.innerHTML = "";
+  const bySec = {};
+  seatsCache.forEach(s => (bySec[s.section] ||= []).push(s));
+  Object.keys(bySec).forEach(sec => {
+    const t = document.createElement("div"); t.style.cssText = "font-size:11px;color:var(--muted);margin:8px 0 4px"; t.textContent = sec; map.appendChild(t);
+    const g = document.createElement("div"); g.className = "grid";
+    bySec[sec].forEach(s => {
+      const el = document.createElement("div");
+      el.className = "seat " + s.status + (S().selected.has(s.seat_id) ? " sel" : "");
+      el.innerHTML = `<div>${s.seat_id}</div><div class="who">${s.price.toLocaleString()} ${s.currency}</div>`;
+      el.title = `${s.seat_id} · ${s.status}`;
+      el.onclick = () => toggleSeat(s.seat_id);
+      g.appendChild(el);
+    });
+    map.appendChild(g);
+  });
+  $("selected").value = [...S().selected].join(", ");
+  const tot = [...S().selected].reduce((a, id) => a + (seatPrice[id] || 0), 0);
+  $("totalEst").textContent = tot ? `${tot.toLocaleString()} COP (est.)` : "—";
+}
+
+function toggleSeat(id) {
+  if (S().selected.has(id)) S().selected.delete(id); else S().selected.add(id);
+  renderMap();
+}
+
+async function createHold() {
+  const seat_ids = [...S().selected];
+  if (!seat_ids.length) { log("Selecciona al menos un asiento", "warnc"); return; }
+  const key = $("idemKey").value.trim() || `auto-${crypto.randomUUID()}`;
+  log(`[${S().user_id}] POST /holds ${JSON.stringify(seat_ids)} key=${key}`, "mutc");
+  const { status, data } = await api("POST", "/holds", { user_id: S().user_id, event_id: EVENT(), seat_ids }, { "Idempotency-Key": key });
+  if (status === 201) {
+    log(`HOLD creado ${data.hold_id} · ${data.seat_ids.join(",")} · ${data.total} ${data.currency} · expira ${data.expires_at}`, "okc");
+    S().holds.unshift({ hold_id: data.hold_id, status: "HELD", seat_ids: data.seat_ids, total: data.total, currency: data.currency, expires_at: data.expires_at });
+    $("co_hold").value = data.hold_id;
+    S().selected.clear(); $("idemKey").value = "";
+  } else {
+    log(`REJECTED (${status}) ${data.reason} · ${data.detail}${data.conflicting_seats ? " · " + data.conflicting_seats.join(",") : ""}`, "badc");
+  }
+  renderMap(); renderHolds(); await loadSeats();
+}
+
+function renderHolds() {
+  const el = $("holds"); el.innerHTML = "";
+  if (!S().holds.length) { el.innerHTML = `<div class="mutc" style="font-size:11px">Sin holds en esta sesión.</div>`; return; }
+  S().holds.forEach(h => {
+    const d = document.createElement("div"); d.className = "hold";
+    d.innerHTML = `<div class="hid">${h.hold_id}</div>
+      <div>Asientos: ${h.seat_ids.join(", ")}</div>
+      <div>Total: ${h.total.toLocaleString()} ${h.currency}</div>
+      <div>Estado: <span class="stat ${h.status}">${h.status}</span> · <span class="cntdown" data-exp="${h.expires_at}">—</span></div>`;
+    el.appendChild(d);
+  });
+}
+
+function tickCountdown() {
+  document.querySelectorAll(".cntdown").forEach(e => {
+    const exp = new Date(e.dataset.exp).getTime();
+    const rem = Math.max(0, Math.floor((exp - Date.now()) / 1000));
+    e.textContent = rem > 0 ? `expira en ${rem}s` : "expirado";
+  });
+}
+
+async function confirmPurchase() {
+  const hold_id = $("co_hold").value.trim(); if (!hold_id) { log("Ingresa un hold_id", "warnc"); return; }
+  const payment_token = $("pay_token").value.trim() || `tok_${crypto.randomUUID().slice(0,8)}`;
+  log(`POST /checkout ${hold_id} token=${payment_token}`, "mutc");
+  const { status, data } = await api("POST", "/checkout", { hold_id, user_id: S().user_id, payment_token }, { "Idempotency-Key": `co-${hold_id}-${payment_token}` });
+  if (status === 200) {
+    log(`SOLD ${data.hold_id} · ${data.seat_ids.join(",")} · ${data.total} ${data.currency} · txn=${data.transaction_id}`, "okc");
+    const h = S().holds.find(x => x.hold_id === hold_id); if (h) h.status = "SOLD";
+  } else {
+    log(`Checkout (${status}) ${data.reason || ""} · ${data.detail || ""}`, status === 503 ? "warnc" : "badc");
+  }
+  renderHolds(); await loadSeats();
+}
+
+async function releaseHold() {
+  const hold_id = $("co_hold").value.trim(); if (!hold_id) { log("Ingresa un hold_id", "warnc"); return; }
+  log(`POST /release ${hold_id}`, "mutc");
+  const { status, data } = await api("POST", "/release", { hold_id, user_id: S().user_id }, { "Idempotency-Key": `rl-${hold_id}` });
+  if (status === 200) { log(`Liberado ${hold_id} · ${data.seat_ids.join(",")}`, "okc"); const h = S().holds.find(x => x.hold_id === hold_id); if (h) h.status = "RELEASED"; }
+  else { log(`Release (${status}) ${data.reason || ""} · ${data.detail || ""}`, "badc"); }
+  renderHolds(); await loadSeats();
+}
+
+function genToken() { $("pay_token").value = "tok_" + crypto.randomUUID().slice(0, 12); }
+
+async function setPayMode(mode) {
+  const { data } = await api("POST", "/admin/payment/mode", { mode });
+  log(`Payment mode → ${data.mode}`, "mutc");
+}
+
+async function raceTest() {
+  const seat = $("race_seat").value.trim(); const n = parseInt($("race_n").value, 10) || 20;
+  $("raceResult").innerHTML = `<div class="warnc">Disputando ${n} usuarios sobre ${seat}…</div>`;
+  log(`CARRERA: ${n} usuarios sobre ${seat}`, "warnc");
+  const tasks = [];
+  for (let i = 0; i < n; i++) {
+    const uid = `race_${i}_${Date.now().toString(36)}`;
+    tasks.push(api("POST", "/holds", { user_id: uid, event_id: EVENT(), seat_ids: [seat] }, { "Idempotency-Key": `race-${i}-${Date.now()}` }));
+  }
+  const res = await Promise.all(tasks);
+  const wins = res.filter(r => r.status === 201);
+  const rejs = res.filter(r => r.status === 409);
+  const other = res.filter(r => r.status !== 201 && r.status !== 409);
+  const winner = wins[0];
+  let html = `<div class="big">${n} solicitudes → <span class="okc">${wins.length} ganador</span>, <span class="badc">${rejs.length} rechazadas</span></div>`;
+  html += `<div class="mutc">Overselling: ${wins.length > 1 ? "SI (" + wins.length + ")" : "0"}</div>`;
+  if (winner) html += `<div class="okc">Ganador: ${winner.data.hold_id} (user ${winner.data.user_id})</div>`;
+  html += `<details><summary>Detalle por solicitud</summary><div style="margin-top:6px">`;
+  res.forEach((r, i) => { html += `<div>#${i} ${r.status === 201 ? '<span class="okc">201 HOLD</span>' : '<span class="badc">409 ' + (r.data.reason || "") + '</span>'}</div>`; });
+  html += `</div></details>`;
+  $("raceResult").innerHTML = html;
+  log(`CARRERA resultado: ${wins.length} ganador, ${rejs.length} rechazadas, overselling=${wins.length > 1 ? wins.length : 0}`, wins.length === 1 ? "okc" : "badc");
+  await loadSeats();
+}
+
+async function loadTrace() {
+  const { data } = await api("GET", "/admin/traceability?limit=15");
+  log(`--- Trazabilidad (${data.length} transiciones) ---`, "mutc");
+  data.reverse().forEach(t => log(`#${t.transition_id} ${t.hold_id} ${t.user_id} [${t.seat_ids.join(",")}] ${t.prev_status}→${t.new_status} (${t.reason}) @${t.timestamp}`, "mutc"));
+}
+
+renderSessions(); loadConfig(); loadSeats(); loadCB();
+setInterval(() => { loadSeats(); loadCB(); }, 3000);
+setInterval(tickCountdown, 1000);
+</script>
+</body>
+</html>
