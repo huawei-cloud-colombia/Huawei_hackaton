@@ -1,0 +1,74 @@
+# Bitácora de uso de GLM 5.2 - Reto 3 NEXUS LIVE
+
+## Prompt Inicial de Arquitectura
+
+**Prompt:** "Analiza el enunciado de NEXUS LIVE. Necesito construir un motor de reservas de alta concurrencia con: SeatLock (estados AVAILABLE/HELD/SOLD), concurrencia segura, idempotencia, circuit breaker, trazabilidad e interfaz web. ¿Qué arquitectura recomiendas?"
+
+**Respuesta de GLM 5.2:** Sugirió una arquitectura modular con:
+- SeatLockEngine como núcleo con threading.Lock
+- CheckoutService como orquestador
+- CircuitBreaker independiente
+- MockPaymentProvider configurable
+- FastAPI + Jinja2 para la interfaz
+
+**Decisión del equipo:** Se siguió la recomendación pero se cambió threading.Lock por threading.RLock para permitir llamadas anidadas (expiración automática dentro de otras operaciones) sin deadlock.
+
+---
+
+## Prompt para Resolver Concurrencia
+
+**Prompt:** "Tengo 100 hilos intentando reservar el mismo asiento. A veces dos hilos logran reservarlo. ¿Cómo garantizo exactamente 1 ganador?"
+
+**Respuesta de GLM 5.2:** Recomendó usar un lock que proteja toda la operación: verificar disponibilidad + cambiar estado deben ser atómicos. También sugirió usar ThreadPoolExecutor para simular concurrencia en tests.
+
+**Acción:** Se implementó el RLock alrededor de toda la operación `reserve()`, no solo alrededor del cambio de estado. Esto garantiza que la verificación y el cambio sean atómicos.
+
+---
+
+## Prompt para Circuit Breaker
+
+**Prompt:** "¿Cómo implemento un circuit breaker que maneje CLOSED, OPEN, HALF_OPEN con transiciones automáticas?"
+
+**Respuesta de GLM 5.2:** Propuso una clase con estados enum, contador de fallos, y timestamp del último fallo. La transición OPEN → HALF_OPEN debe ser automática al pasar el recovery_timeout.
+
+**Decisión del equipo:** Se implementó exactamente como sugirió GLM, pero se añadió `force_open()` y `force_closed()` para testing manual desde la interfaz.
+
+---
+
+## Prompt para Estrategia de Pago
+
+**Prompt:** "¿Qué hago con el HOLD cuando el pago da TIMEOUT? ¿Lo libero? ¿Lo mantengo?"
+
+**Respuesta de GLM 5.2:** Sugirió liberar el HOLD inmediatamente en caso de timeout.
+
+**Corrección del equipo:** NO se siguió esta recomendación. El enunciado dice explícitamente: "Un timeout NO significa automáticamente que el pago fue rechazado. El sistema no debe vender el asiento sin certeza, duplicar el cobro, ni liberar un asiento sin una estrategia coherente mientras exista una operación potencialmente pendiente." Se mantuvo el HOLD activo para que el cliente pueda reintentar.
+
+---
+
+## Error Encontrado con Ayuda del Agente
+
+**Prompt:** "Los tests de concurrencia a veces fallan aleatoriamente. ¿Qué puede estar pasando?"
+
+**Análisis:** GLM sugirió que podía ser un problema de race condition en la expiración automática. Si un hold expiraba mientras otro hilo lo estaba confirmando, podía quedar en estado inconsistente.
+
+**Solución:** Se añadió `_expire_all()` al inicio de cada operación protegida por el lock, garantizando que la expiración siempre ocurra dentro del lock y no pueda interferir con otras operaciones.
+
+---
+
+## Prompt para Bono D (GLM en el Producto)
+
+**Prompt:** "¿Cómo integro GLM 5.2 dentro del producto para generar explicaciones operacionales?"
+
+**Respuesta de GLM 5.2:** Sugirió un módulo que reciba el historial de trazabilidad y genere un análisis estructurado. Recomendó manejar timeout, respuesta vacía, error de API y formato inesperado con fallback.
+
+**Acción:** Se implementó `OperationsExplainer` con fallback rule-based que genera un análisis estructurado (summary, timeline, risk_assessment, recommendations) cuando GLM no está disponible o falla.
+
+---
+
+## Prompt para Interfaz
+
+**Prompt:** "Diseña una interfaz web para NEXUS LIVE que permita reservar asientos, confirmar pagos, simular carreras y ver trazabilidad."
+
+**Respuesta de GLM 5.2:** Propuso un layout con grid de asientos, panel de reserva, panel de confirmación y simulador de carreras. Tema oscuro con colores distinguibles para estados.
+
+**Acción:** Se implementó la interfaz con todas las funcionalidades sugeridas más control del circuit breaker, sala de espera y forzado de resultados de pago.
