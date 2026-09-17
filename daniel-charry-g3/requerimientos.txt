@@ -1,0 +1,25 @@
+# ============================================================
+# requerimientos.txt
+# Reto 3: NEXUS LIVE // T-80
+# Equipo: Daniel Charry (daniel-charry-g3)
+# Stack: Python + FastAPI
+# ============================================================
+
+# --- Framework web ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# --- Concurrencia y validación ---
+pydantic==2.9.2
+python-multipart==0.0.9
+
+# --- Pruebas ---
+pytest==8.3.3
+pytest-asyncio==0.24.0
+httpx==0.27.2
+
+# --- Utilidades ---
+python-dotenv==1.0.1
+
+# --- Interfaz (servir archivos estáticos) ---
+jinja2==3.1.4

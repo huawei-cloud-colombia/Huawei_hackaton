@@ -1,0 +1,108 @@
+# 🤖 Bitácora de Prompts Usados — GLM 5.2
+# Reto 3: NEXUS LIVE // T-80
+# Equipo: Daniel Charry (daniel-charry-g3)
+
+================================================================================
+PROMPT #1 — Inicial (Configuración del proyecto)
+================================================================================
+Fecha: 2026-09-17
+
+Prompt:
+  "Deseo clonar el repositorio https://github.com/huawei-cloud-colombia/Huawei_hackaton.git,
+   crear una rama independiente llamada daniel-charry-g3, y dentro de ella crear
+   una carpeta con el mismo nombre de la rama que contenga un README.md y un
+   archivo de requerimientos."
+
+Resultado:
+  - Repositorio clonado correctamente.
+  - Rama `daniel-charry-g3` creada.
+  - Carpeta `daniel-charry-g3/` creada en la raíz.
+  - Archivo `README.md` creado con la estructura del reto.
+  - Archivo `requerimientos.txt` creado con las dependencias necesarias.
+
+================================================================================
+PROMPT #2 — Análisis del enunciado
+================================================================================
+Fecha: 2026-09-17
+
+Prompt:
+  "Lee el archivo Retos/RETO_3_NEXUS_LIVE.md y extrae:
+   - Los requisitos funcionales y no funcionales.
+   - Las 4 fases del reto.
+   - Los escenarios de prueba (A-F).
+   - Los bonos disponibles.
+   - Los entregables esperados."
+
+Resultado:
+  - Se identificaron 4 fases: SeatLock, Concurrencia, Pagos, Interfaz.
+  - 6 escenarios de prueba (A-F).
+  - 4 bonos opcionales (A-D).
+  - 7 entregables mínimos.
+
+================================================================================
+PROMPT #3 — Definición de arquitectura (PENDIENTE)
+================================================================================
+Fecha: (por completar)
+
+Prompt:
+  (por definir)
+
+Resultado:
+  (por completar)
+
+================================================================================
+PROMPT #4 — Implementación Fase 1: SeatLock (PENDIENTE)
+================================================================================
+Fecha: (por completar)
+
+Prompt:
+  (por definir)
+
+Resultado:
+  (por completar)
+
+================================================================================
+PROMPT #5 — Implementación Fase 2: Concurrencia e Idempotencia (PENDIENTE)
+================================================================================
+Fecha: (por completar)
+
+Prompt:
+  (por definir)
+
+Resultado:
+  (por completar)
+
+================================================================================
+PROMPT #6 — Implementación Fase 3: Pagos y Circuit Breaker (PENDIENTE)
+================================================================================
+Fecha: (por completar)
+
+Prompt:
+  (por definir)
+
+Resultado:
+  (por completar)
+
+================================================================================
+PROMPT #7 — Implementación Fase 4: Interfaz visual (PENDIENTE)
+================================================================================
+Fecha: (por completar)
+
+Prompt:
+  (por definir)
+
+Resultado:
+  (por completar)
+
+================================================================================
+NOTAS ADICIONALES
+================================================================================
+
+- Decisiones donde el equipo NO siguió la primera recomendación del modelo:
+  (por completar)
+
+- Errores encontrados con ayuda del agente:
+  (por completar)
+
+- Prompts que permitieron resolver problemas importantes:
+  (por completar)
