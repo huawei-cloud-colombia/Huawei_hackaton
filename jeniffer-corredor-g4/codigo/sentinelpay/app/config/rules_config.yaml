@@ -1,0 +1,43 @@
+# SentinelPay Risk Engine - Configuracion de reglas
+#
+# Cada regla puede:
+#   - activarse/desactivarse (enabled)
+#   - modificar su peso (weight)
+
+rules:
+  anomalous_amount:
+    enabled: true
+    weight: 25
+    multiplier: 3.0
+
+  country_mismatch:
+    enabled: true
+    weight: 30
+
+  unusual_hour:
+    enabled: true
+    weight: 10
+    start_hour: 1
+    end_hour: 5
+    default_timezone: UTC
+    # merchant_timezones: mapeo opcional merchant_id -> timezone
+    # merchant_timezones:
+    #   merch_petshop_bog: America/Bogota
+
+  velocity_card:
+    enabled: true
+    threshold: 5
+    window_seconds: 10
+    weight: 40
+    block_duration: 120
+
+  velocity_device:
+    enabled: true
+    threshold: 3
+    window_seconds: 30
+    weight: 50
+    block_duration: 120
+
+scoring:
+  reject_threshold: 50
+  review_threshold: 0

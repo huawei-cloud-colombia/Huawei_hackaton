@@ -1,0 +1,38 @@
+[
+  {
+    "id": "txn_00001",
+    "card_id": "card_9F21",
+    "merchant_id": "merch_petshop_bog",
+    "amount": 50000,
+    "currency": "COP",
+    "country": "CO",
+    "ip_country": "CO",
+    "device_id": "dev_a19x",
+    "ip": "190.24.6.10",
+    "timestamp": "2024-11-28T14:30:00Z"
+  },
+  {
+    "id": "txn_00002",
+    "card_id": "card_9F21",
+    "merchant_id": "merch_petshop_bog",
+    "amount": 60000,
+    "currency": "COP",
+    "country": "CO",
+    "ip_country": "CO",
+    "device_id": "dev_a19x",
+    "ip": "190.24.6.10",
+    "timestamp": "2024-11-28T15:00:00Z"
+  },
+  {
+    "id": "txn_00234",
+    "card_id": "card_9F21",
+    "merchant_id": "merch_petshop_bog",
+    "amount": 850000,
+    "currency": "COP",
+    "country": "CO",
+    "ip_country": "RU",
+    "device_id": "dev_a19x",
+    "ip": "185.220.101.14",
+    "timestamp": "2024-11-28T04:58:12Z"
+  }
+]
