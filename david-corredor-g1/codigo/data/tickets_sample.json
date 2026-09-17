@@ -1,0 +1,22 @@
+[
+  { "ticket_id": "T1", "customer_id": "ACME-CO", "created_at": "2026-09-16T08:15:00Z", "region": "latam-north", "text": "Desde esta mañana los 1.800 usuarios de nuestra empresa no pueden iniciar sesión con SSO." },
+  { "ticket_id": "T2", "customer_id": "BLUEBIRD", "created_at": "2026-09-16T08:18:00Z", "region": "eu-west", "text": "Nos llegó una factura con dos cargos por la misma licencia anual." },
+  { "ticket_id": "T3", "customer_id": "LUMA-INC", "created_at": "2026-09-16T08:20:00Z", "region": "us-east", "text": "Sería excelente poder cambiar la aplicación a modo oscuro." },
+  { "ticket_id": "T4", "customer_id": "ACME-CO", "created_at": "2026-09-16T08:22:00Z", "region": "us-east", "text": "Exportar el reporte financiero a CSV devuelve error 500 desde el despliegue." },
+  { "ticket_id": "T5", "customer_id": "NORTHSTAR", "created_at": "2026-09-16T08:15:00Z", "region": "latam-north", "text": "La API en latam-north responde 503 en aproximadamente la mitad de las llamadas." },
+  { "ticket_id": "T6", "customer_id": "MERIDIAN", "created_at": "2026-09-16T08:15:00Z", "region": "eu-west", "text": "Nuestro conector ERP dejó de sincronizar pedidos desde las 08:15." },
+  { "ticket_id": "T7", "customer_id": "ACME-CO", "created_at": "2026-09-16T08:16:00Z", "region": "latam-north", "text": "Ninguno de nuestros 2.300 usuarios puede entrar con SSO desde la actualización. Tenemos cierre contable hoy." },
+  { "ticket_id": "T8", "customer_id": "NORTHSTAR", "created_at": "2026-09-16T08:17:00Z", "region": "latam-north", "text": "Nuestro checkout dejó de funcionar porque las llamadas a ATLAS fallan 503." },
+  { "ticket_id": "T9", "customer_id": "ORION-SA", "created_at": "2026-09-16T08:18:00Z", "region": "latam-north", "text": "50% de las requests a la API están fallando en la región norte." },
+  { "ticket_id": "T10", "customer_id": "NORTHSTAR", "created_at": "2026-09-16T08:19:00Z", "region": "latam-north", "text": "Después del deploy, latam-north está intermitente." },
+  { "ticket_id": "T11", "customer_id": "ORION-SA", "created_at": "2026-09-16T08:20:00Z", "region": "latam-north", "text": "La API devuelve 503 desde las 08:15 en latam-north." },
+  { "ticket_id": "T12", "customer_id": "MERIDIAN", "created_at": "2026-09-16T08:21:00Z", "region": "eu-west", "text": "El conector ERP falla con timeout al sincronizar pedidos." },
+  { "ticket_id": "T13", "customer_id": "BLUEBIRD", "created_at": "2026-09-16T08:23:00Z", "region": "eu-west", "text": "La sincronización del ERP lleva caída 10 minutos, pedidos acumulándose." },
+  { "ticket_id": "T14", "customer_id": "ACME-CO", "created_at": "2026-09-16T08:24:00Z", "region": "us-east", "text": "El export de CSV sigue dando 500, necesitamos el reporte urgente para auditoría." },
+  { "ticket_id": "T15", "customer_id": "LUMA-INC", "created_at": "2026-09-16T08:25:00Z", "region": "us-east", "text": "Gracias por el soporte, todo funcionando bien ahora." },
+  { "ticket_id": "T16", "customer_id": "ORION-SA", "created_at": "2026-09-16T08:26:00Z", "region": "latam-north", "text": "Detectamos accesos no autorizados a la cuenta admin desde una IP desconocida." },
+  { "ticket_id": "T17", "customer_id": "NORTHSTAR", "created_at": "2026-09-16T08:27:00Z", "region": "latam-north", "text": "Las exportaciones a PDF también fallan con 500 desde el despliegue." },
+  { "ticket_id": "T18", "customer_id": "MERIDIAN", "created_at": "2026-09-16T08:28:00Z", "region": "eu-west", "text": "No me llega el correo de verificación para completar el registro." },
+  { "ticket_id": "T19", "customer_id": "ACME-CO", "created_at": "2026-09-16T08:29:00Z", "region": "latam-north", "text": "SSO sigue caído, 2.300 usuarios sin acceso, estamos perdiendo dinero cada minuto." },
+  { "ticket_id": "T20", "customer_id": "BLUEBIRD", "created_at": "2026-09-16T08:30:00Z", "region": "eu-west", "text": "Sería útil tener un botón de re-exportación masiva." }
+]

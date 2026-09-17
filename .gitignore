@@ -1,0 +1,31 @@
+# Variables de entorno
+.env
+*.env
+!.env.example
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+coverage/
+
+# Entornos virtuales
+.venv/
+venv/
+
+# Caché
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+Thumbs.db
