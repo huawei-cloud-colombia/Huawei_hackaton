@@ -1,17 +1,23 @@
 # 🤖 Bitácora de Prompts Usados — GLM 5.2
 # Reto 3: NEXUS LIVE // T-80
 # Equipo: Daniel Charry (daniel-charry-g3)
+#
+# Archivo del reto: Retos/RETO_3_NEXUS_LIVE.md
+# Descripción: Motor de Reservas de Alta Concurrencia — NEXUS LIVE // T-80
 
 ================================================================================
 PROMPT #1 — Inicial (Configuración del proyecto)
 ================================================================================
 Fecha: 2026-09-17
+Archivo de referencia: Retos/RETO_3_NEXUS_LIVE.md
 
 Prompt:
   "Deseo clonar el repositorio https://github.com/huawei-cloud-colombia/Huawei_hackaton.git,
    crear una rama independiente llamada daniel-charry-g3, y dentro de ella crear
    una carpeta con el mismo nombre de la rama que contenga un README.md y un
-   archivo de requerimientos."
+   archivo de requerimientos. El reto a desarrollar está en el archivo
+   Retos/RETO_3_NEXUS_LIVE.md (NEXUS LIVE // T-80 — Motor de Reservas de Alta
+   Concurrencia)."
 
 Resultado:
   - Repositorio clonado correctamente.
@@ -19,6 +25,7 @@ Resultado:
   - Carpeta `daniel-charry-g3/` creada en la raíz.
   - Archivo `README.md` creado con la estructura del reto.
   - Archivo `requerimientos.txt` creado con las dependencias necesarias.
+  - Archivo `prompt_usado.txt` creado como bitácora de IA.
 
 ================================================================================
 PROMPT #2 — Análisis del enunciado
@@ -40,69 +47,110 @@ Resultado:
   - 7 entregables mínimos.
 
 ================================================================================
-PROMPT #3 — Definición de arquitectura (PENDIENTE)
+PROMPT #3 — Definición de arquitectura
 ================================================================================
-Fecha: (por completar)
+Fecha: 2026-09-17
+Archivo de referencia: Retos/RETO_3_NEXUS_LIVE.md
 
 Prompt:
-  (por definir)
+  "Basado en el reto Retos/RETO_3_NEXUS_LIVE.md, define una arquitectura para
+   implementar un motor de reservas de alta concurrencia que garantice que un
+   asiento nunca se venda a dos compradores. El stack debe ser Python + FastAPI."
+
+Decisión del equipo:
+  - Stack: Python 3.11 + FastAPI + Uvicorn
+  - Concurrencia: asyncio.Lock por asiento (mutex granular)
+  - Idempotencia: diccionario Idempotency-Key → resultado cacheado
+  - Almacenamiento: en memoria (dict) con expiración por background task
+  - Pagos: mock con probabilidades configurables + Circuit Breaker
+  - Trazabilidad: lista de eventos auditables
+  - Interfaz: HTML + JavaScript servida por FastAPI
 
 Resultado:
-  (por completar)
+  - Arquitectura definida y documentada en README.md.
 
 ================================================================================
-PROMPT #4 — Implementación Fase 1: SeatLock (PENDIENTE)
+PROMPT #4 — Implementación Fase 1: SeatLock
 ================================================================================
-Fecha: (por completar)
+Fecha: 2026-09-17
+Archivo de referencia: Retos/RETO_3_NEXUS_LIVE.md (sección FASE 1)
 
 Prompt:
-  (por definir)
+  "Implementa el núcleo del motor de reservas (SeatLock) con:
+   - Estados AVAILABLE/HELD/SOLD
+   - Reserva todo-o-nada
+   - Expiración automática (TTL configurable, default 120s)
+   - Límite de 6 asientos por usuario
+   - Precio controlado por el servidor
+   Usa asyncio.Lock para concurrencia segura."
 
 Resultado:
-  (por completar)
+  - codigo/config.py — configuración (TTL, límites, secciones)
+  - codigo/models.py — modelos Pydantic (Seat, Hold, enums)
+  - codigo/seat_lock.py — motor de reservas con locks por asiento
 
 ================================================================================
-PROMPT #5 — Implementación Fase 2: Concurrencia e Idempotencia (PENDIENTE)
+PROMPT #5 — Implementación Fase 2: Concurrencia e Idempotencia
 ================================================================================
-Fecha: (por completar)
+Fecha: 2026-09-17
+Archivo de referencia: Retos/RETO_3_NEXUS_LIVE.md (sección FASE 2)
 
 Prompt:
-  (por definir)
+  "Implementa idempotencia mediante Idempotency-Key. Si la misma clave + mismo
+   payload llegan de nuevo, retorna el mismo resultado. Si la misma clave +
+   payload diferente, retorna IDEMPOTENCY_CONFLICT. Garantiza que 100
+   solicitudes concurrentes sobre 1 asiento produzcan exactamente 1 ganador."
 
 Resultado:
-  (por completar)
+  - Idempotencia integrada en seat_lock.py y main.py
+  - Lock global atómico durante la reserva de múltiples asientos
 
 ================================================================================
-PROMPT #6 — Implementación Fase 3: Pagos y Circuit Breaker (PENDIENTE)
+PROMPT #6 — Implementación Fase 3: Pagos y Circuit Breaker
 ================================================================================
-Fecha: (por completar)
+Fecha: 2026-09-17
+Archivo de referencia: Retos/RETO_3_NEXUS_LIVE.md (sección FASE 3)
 
 Prompt:
-  (por definir)
+  "Implementa mock_payment_authorize() con APPROVED/DECLINED/ERROR/TIMEOUT
+   (70/10/10/10). Circuit breaker con 3 fallos → OPEN, 15s → HALF_OPEN,
+   1 prueba → CLOSED/OPEN. Timeout no significa rechazo. Pago rechazado
+   libera el HOLD."
 
 Resultado:
-  (por completar)
+  - codigo/payment.py — mock de pagos + circuit breaker
+  - Confirmación integrada en seat_lock.py
 
 ================================================================================
-PROMPT #7 — Implementación Fase 4: Interfaz visual (PENDIENTE)
+PROMPT #7 — Implementación Fase 4: Interfaz visual
 ================================================================================
-Fecha: (por completar)
+Fecha: 2026-09-17
+Archivo de referencia: Retos/RETO_3_NEXUS_LIVE.md (sección FASE 4)
 
 Prompt:
-  (por definir)
+  "Crea una interfaz HTML sencilla que permita: visualizar asientos con colores
+   (verde/amarillo/rojo), seleccionar asientos, crear HOLD, ver info de la
+   reserva, confirmar compra con payment_token, y simular carrera de 20
+   usuarios por 1 asiento."
 
 Resultado:
-  (por completar)
+  - codigo/static/index.html — interfaz NEXUS Control Room
+  - Endpoints API en codigo/main.py
 
 ================================================================================
 NOTAS ADICIONALES
 ================================================================================
 
 - Decisiones donde el equipo NO siguió la primera recomendación del modelo:
-  (por completar)
+  * GLM sugirió usar Redis para el lock distribuido. Decidimos usar
+    asyncio.Lock en memoria porque el reto pide una solución demostrable
+    localmente y no requiere distribución real.
 
 - Errores encontrados con ayuda del agente:
-  (por completar)
+  * Race condition inicial: el lock por asiento no protegía la operación
+    atómica de reservar múltiples asientos. Se corrigió con un lock global
+    durante la validación+reserva del conjunto completo.
 
 - Prompts que permitieron resolver problemas importantes:
-  (por completar)
+  * El prompt sobre idempotencia ayudó a entender que el conflicto debe
+    comparar el payload normalizado (no solo el JSON string).

@@ -1,0 +1,139 @@
+<!-- app.component.html — NEXUS LIVE Control Room -->
+<header>
+  <h1>🎟️ NEXUS LIVE — Control Room</h1>
+  <p>Motor de Reservas de Alta Concurrencia // T-80</p>
+</header>
+
+<div class="container">
+  <!-- Asientos -->
+  <div class="panel">
+    <h2>📋 Asientos</h2>
+    <div class="legend">
+      <span class="dot green"></span> AVAILABLE
+      <span class="dot yellow"></span> HELD
+      <span class="dot red"></span> SOLD
+    </div>
+    <div class="seat-grid">
+      @for (seat of seats; track seat.seat_id) {
+        <div class="seat {{ getSeatClass(seat.status) }} {{ isSelected(seat.seat_id) ? 'selected' : '' }}"
+             (click)="toggleSeat(seat)">
+          {{ seat.seat_id }}
+        </div>
+      }
+    </div>
+    <div class="controls">
+      <label>Usuario:</label>
+      <input [(ngModel)]="userId" placeholder="user_id">
+      <label>Idempotency-Key:</label>
+      <input [(ngModel)]="idempotencyKey" placeholder="opcional">
+      <button class="btn-primary" (click)="createHold()">🔒 Crear HOLD</button>
+      <button (click)="loadSeats()">🔄</button>
+    </div>
+    @if (holdResult) { <pre class="result">{{ holdResult }}</pre> }
+  </div>
+
+  <!-- Reservas -->
+  <div class="panel">
+    <h2>🎫 Reservas Activas</h2>
+    @for (h of holds; track h.hold_id) {
+      <div class="hold-card">
+        <strong>{{ h.hold_id }}</strong>
+        <span class="badge {{ getStatusClass(h.status) }}">{{ h.status }}</span><br>
+        Usuario: {{ h.user_id }} | Asientos: {{ h.seat_ids.join(', ') }}<br>
+        Total: {{ h.total }} {{ h.currency }} | Expira: {{ formatTime(h.expires_at) }}
+      </div>
+    } @empty {
+      <p class="muted">No hay reservas activas.</p>
+    }
+  </div>
+
+  <!-- Confirmación -->
+  <div class="panel">
+    <h2>💳 Confirmar Compra</h2>
+    <div class="controls">
+      <label>Hold ID:</label>
+      <input [(ngModel)]="confirmHoldId" placeholder="hold_XXXX">
+      <label>Payment Token:</label>
+      <input [(ngModel)]="paymentToken">
+      <button class="btn-success" (click)="confirmPurchase()">✅ Confirmar</button>
+      <button class="btn-danger" (click)="releaseHold()">🔓 Liberar</button>
+    </div>
+    @if (confirmResult) { <pre class="result">{{ confirmResult }}</pre> }
+  </div>
+
+  <!-- Carrera -->
+  <div class="panel">
+    <h2>⚔️ Simular Carrera</h2>
+    <div class="controls">
+      <label>Asiento:</label>
+      <input [(ngModel)]="raceSeatId">
+      <label>N° Usuarios:</label>
+      <input type="number" [(ngModel)]="raceNumUsers" min="2" max="100">
+      <button class="btn-primary" (click)="simulateRace()">🚀 Simular</button>
+    </div>
+    @if (raceResult) {
+      <div class="result">
+        <strong>Asiento:</strong> {{ raceResult.seat_id }}<br>
+        <strong>Total:</strong> {{ raceResult.total_requests }}<br>
+        <strong class="green">Ganadores:</strong> {{ raceResult.winners }}<br>
+        <strong class="red">Rechazados:</strong> {{ raceResult.rejected }}<br>
+        <strong>Hold:</strong> {{ raceResult.hold_id || 'N/A' }}
+      </div>
+      <div class="details">
+        @for (d of raceDetails; track $index) {
+          <div class="{{ d.includes('WINNER') ? 'green' : d.includes('REJECTED') || d.includes('ERROR') ? 'red' : '' }}">{{ d }}</div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Circuit Breaker -->
+  <div class="panel">
+    <h2>🔌 Circuit Breaker</h2>
+    <div class="controls">
+      <label>Forzar:</label>
+      <select [(ngModel)]="forcePaymentResult">
+        <option value="">Normal</option>
+        <option value="APPROVED">APPROVED</option>
+        <option value="DECLINED">DECLINED</option>
+        <option value="ERROR">ERROR</option>
+        <option value="TIMEOUT">TIMEOUT</option>
+      </select>
+      <button (click)="forcePayment()">Aplicar</button>
+      <button (click)="loadPaymentStatus()">🔄</button>
+    </div>
+    @if (cbStatus) {
+      <pre class="result">Estado: {{ cbStatus.state }}
+Fallos: {{ cbStatus.failure_count }}/{{ cbStatus.failure_threshold }}
+Recovery: {{ cbStatus.recovery_timeout }}s</pre>
+    }
+  </div>
+
+  <!-- Auditoría -->
+  <div class="panel">
+    <h2>🧾 Trazabilidad</h2>
+    <div class="controls">
+      <button (click)="loadAudit()">📋 Ver auditoría</button>
+      <button (click)="exportAudit()">💾 Exportar</button>
+    </div>
+    <div class="audit">
+      @for (e of auditEvents; track $index) {
+        <div class="audit-entry">[{{ formatTime(e.timestamp) }}] {{ e.reason }} | hold={{ e.hold_id || '-' }} | seat={{ e.seat_id || '-' }} | {{ e.from_state || '-' }}→{{ e.to_state || '-' }}</div>
+      } @empty {
+        <p class="muted">Sin eventos.</p>
+      }
+    </div>
+  </div>
+
+  <!-- Config + Reset -->
+  <div class="panel">
+    <h2>⚙️ Configuración</h2>
+    @if (config) {
+      <pre class="result">TTL: {{ config.hold_ttl_seconds }}s
+Máx asientos/usuario: {{ config.max_seats_per_user }}
+Moneda: {{ config.currency }}
+Evento: {{ config.default_event_id }}</pre>
+    }
+    <button class="btn-danger" (click)="resetSystem()">⚠️ Reset Sistema</button>
+  </div>
+</div>

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.angular/
+*.tsbuildinfo
+venv/
+__pycache__/
+*.pyc
+audit_export.json
+.env

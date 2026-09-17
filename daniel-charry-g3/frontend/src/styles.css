@@ -1,0 +1,8 @@
+/* Estilos globales NEXUS LIVE */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: #0a0e1a;
+  color: #e0e6ed;
+  min-height: 100vh;
+}

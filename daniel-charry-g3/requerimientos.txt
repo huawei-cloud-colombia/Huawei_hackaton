@@ -23,3 +23,9 @@ python-dotenv==1.0.1
 
 # --- Interfaz (servir archivos estáticos) ---
 jinja2==3.1.4
+
+# --- Análisis y formato ---
+black==24.8.0
+
+# --- PostgreSQL ---
+asyncpg==0.29.0
