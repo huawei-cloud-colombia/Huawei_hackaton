@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS LIVE — Control Room</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #0a0e1a;
+            color: #e0e6ed;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(135deg, #1a1f35, #2d1b4e);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #4a6fa5;
+        }
+        header h1 { font-size: 1.8em; color: #7ec8e3; }
+        header p { color: #a0a8b0; margin-top: 5px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .panel {
+            background: #141a2e;
+            border: 1px solid #2a3550;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .panel h2 { color: #7ec8e3; margin-bottom: 15px; font-size: 1.3em; }
+        .seat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+        }
+        .seat {
+            padding: 10px 5px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .seat:hover { transform: scale(1.05); }
+        .seat-available { background: #1a4d2e; color: #4ade80; border-color: #4ade80; }
+        .seat-held { background: #4d4d1a; color: #facc15; border-color: #facc15; }
+        .seat-sold { background: #4d1a1a; color: #f87171; border-color: #f87171; cursor: not-allowed; }
+        .seat-selected { border: 2px solid #7ec8e3 !important; box-shadow: 0 0 10px #7ec8e3; }
+        .controls { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+        .controls label { color: #a0a8b0; }
+        input, button, select {
+            background: #1a2340;
+            color: #e0e6ed;
+            border: 1px solid #3a4a6a;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 0.9em;
+        }
+        button {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover { background: #2a3a60; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: #2d5a87; border-color: #4a8fc7; }
+        .btn-primary:hover { background: #3a6fa5; }
+        .btn-danger { background: #873d3d; border-color: #c74a4a; }
+        .btn-danger:hover { background: #a54a4a; }
+        .btn-success { background: #2d874d; border-color: #4ac76f; }
+        .btn-success:hover { background: #3aa55a; }
+        .hold-info {
+            background: #0d1525;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+        .hold-card {
+            background: #0d1525;
+            border: 1px solid #2a3550;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+        .status-HELD { background: #4d4d1a; color: #facc15; }
+        .status-SOLD { background: #4d1a1a; color: #f87171; }
+        .status-AVAILABLE { background: #1a4d2e; color: #4ade80; }
+        .status-ACTIVE { background: #1a3d4d; color: #60a5fa; }
+        .status-EXPIRED { background: #3a3a3a; color: #999; }
+        .status-CONFIRMED { background: #4d1a1a; color: #f87171; }
+        .status-RELEASED { background: #3a3a3a; color: #999; }
+        #race-result {
+            background: #0d1525;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.85em;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .race-winner { color: #4ade80; }
+        .race-rejected { color: #f87171; }
+        .cb-closed { color: #4ade80; }
+        .cb-open { color: #f87171; }
+        .cb-half { color: #facc15; }
+        .audit-log {
+            background: #0d1525;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.8em;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .audit-entry { padding: 4px 0; border-bottom: 1px solid #1a2340; }
+        .section-label { color: #7ec8e3; font-weight: bold; margin: 15px 0 8px 0; }
+        .legend { display: flex; gap: 20px; margin-bottom: 15px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎟️ NEXUS LIVE — Control Room</h1>
+        <p>Motor de Reservas de Alta Concurrencia // T-80</p>
+    </header>
+
+    <div class="container">
+        <!-- Panel de asientos -->
+        <div class="panel">
+            <h2>📋 Asientos Disponibles</h2>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div> AVAILABLE</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#facc15"></div> HELD</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div> SOLD</div>
+            </div>
+            <div id="seats" class="seat-grid"></div>
+            <div class="section-label">Selecciona asientos y crea una reserva:</div>
+            <div class="controls">
+                <label>Usuario:</label>
+                <input type="text" id="user-id" value="usr_demo" placeholder="user_id">
+                <label>Idempotency-Key (opcional):</label>
+                <input type="text" id="idempotency-key" placeholder="reserve-key-001">
+                <button class="btn-primary" onclick="createHold()">🔒 Crear HOLD</button>
+                <button onclick="loadSeats()">🔄 Refrescar</button>
+            </div>
+            <div id="hold-result" class="hold-info"></div>
+        </div>
+
+        <!-- Panel de reservas activas -->
+        <div class="panel">
+            <h2>🎫 Reservas Activas</h2>
+            <div id="holds"></div>
+        </div>
+
+        <!-- Panel de confirmación -->
+        <div class="panel">
+            <h2>💳 Confirmar Compra</h2>
+            <div class="controls">
+                <label>Hold ID:</label>
+                <input type="text" id="confirm-hold-id" placeholder="hold_XXXX">
+                <label>Payment Token:</label>
+                <input type="text" id="payment-token" value="tok_test_12345" placeholder="tok_test_...">
+                <button class="btn-success" onclick="confirmPurchase()">✅ Confirmar</button>
+                <button class="btn-danger" onclick="releaseHold()">🔓 Liberar HOLD</button>
+            </div>
+            <div id="confirm-result" class="hold-info"></div>
+        </div>
+
+        <!-- Panel de simulación de carrera -->
+        <div class="panel">
+            <h2>⚔️ Simular Carrera (Concurrencia)</h2>
+            <div class="controls">
+                <label>Asiento:</label>
+                <input type="text" id="race-seat" value="VIP-A-001" placeholder="VIP-A-001">
+                <label>N° Usuarios:</label>
+                <input type="number" id="race-users" value="20" min="2" max="100">
+                <button class="btn-primary" onclick="simulateRace()">🚀 Simular Carrera</button>
+            </div>
+            <div id="race-result"></div>
+        </div>
+
+        <!-- Panel de pagos y circuit breaker -->
+        <div class="panel">
+            <h2>🔌 Estado del Proveedor de Pagos</h2>
+            <div class="controls">
+                <label>Forzar resultado:</label>
+                <select id="force-payment">
+                    <option value="">Normal (aleatorio)</option>
+                    <option value="APPROVED">APPROVED</option>
+                    <option value="DECLINED">DECLINED</option>
+                    <option value="ERROR">ERROR</option>
+                    <option value="TIMEOUT">TIMEOUT</option>
+                </select>
+                <button onclick="forcePayment()">Aplicar</button>
+                <button onclick="loadPaymentStatus()">🔄 Actualizar</button>
+            </div>
+            <div id="payment-status" class="hold-info"></div>
+        </div>
+
+        <!-- Panel de auditoría -->
+        <div class="panel">
+            <h2>🧾 Trazabilidad</h2>
+            <div class="controls">
+                <button onclick="loadAudit()">📋 Ver auditoría</button>
+                <button onclick="exportAudit()">💾 Exportar JSON</button>
+            </div>
+            <div id="audit-log" class="audit-log"></div>
+        </div>
+
+        <!-- Panel de configuración -->
+        <div class="panel">
+            <h2>⚙️ Configuración</h2>
+            <div id="config-info" class="hold-info"></div>
+            <div class="controls" style="margin-top:10px">
+                <button class="btn-danger" onclick="resetSystem()">⚠️ Reset Sistema</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '';
+        let selectedSeats = new Set();
+
+        // ─── Asientos ───────────────────────────────────────
+        async function loadSeats() {
+            const res = await fetch(`${API}/api/seats`);
+            const seats = await res.json();
+            const grid = document.getElementById('seats');
+            grid.innerHTML = '';
+            seats.forEach(seat => {
+                const div = document.createElement('div');
+                div.className = `seat seat-${seat.status.toLowerCase()}`;
+                div.textContent = seat.seat_id;
+                div.onclick = () => toggleSeat(seat.seat_id, seat.status, div);
+                if (selectedSeats.has(seat.seat_id)) div.classList.add('seat-selected');
+                grid.appendChild(div);
+            });
+        }
+
+        function toggleSeat(seatId, status, el) {
+            if (status === 'SOLD') return;
+            if (selectedSeats.has(seatId)) {
+                selectedSeats.delete(seatId);
+                el.classList.remove('seat-selected');
+            } else {
+                selectedSeats.add(seatId);
+                el.classList.add('seat-selected');
+            }
+        }
+
+        // ─── Crear HOLD ─────────────────────────────────────
+        async function createHold() {
+            const userId = document.getElementById('user-id').value;
+            const idempKey = document.getElementById('idempotency-key').value;
+            const seatIds = Array.from(selectedSeats);
+            if (seatIds.length === 0) {
+                document.getElementById('hold-result').innerHTML = '⚠️ Selecciona al menos un asiento.';
+                return;
+            }
+            const headers = { 'Content-Type': 'application/json' };
+            if (idempKey) headers['Idempotency-Key'] = idempKey;
+            const res = await fetch(`${API}/api/reserve`, {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    user_id: userId,
+                    event_id: 'aurora-bogota-2026',
+                    seat_ids: seatIds
+                })
+            });
+            const data = await res.json();
+            const el = document.getElementById('hold-result');
+            if (res.ok) {
+                el.innerHTML = `✅ <strong>HOLD CREADO</strong><br>` +
+                    `Hold ID: ${data.hold_id}<br>` +
+                    `Asientos: ${data.seat_ids.join(', ')}<br>` +
+                    `Total: ${data.total} ${data.currency}<br>` +
+                    `Expira: ${data.expires_at}<br>` +
+                    `Estado: ${data.status}`;
+                document.getElementById('confirm-hold-id').value = data.hold_id;
+                selectedSeats.clear();
+            } else {
+                el.innerHTML = `❌ <strong>ERROR</strong><br>` +
+                    `Error: ${data.detail?.error || 'unknown'}<br>` +
+                    `Razón: ${data.detail?.reason || JSON.stringify(data)}`;
+            }
+            loadSeats();
+            loadHolds();
+        }
+
+        // ─── Cargar reservas ────────────────────────────────
+        async function loadHolds() {
+            const res = await fetch(`${API}/api/holds`);
+            const holds = await res.json();
+            const el = document.getElementById('holds');
+            if (holds.length === 0) {
+                el.innerHTML = '<p style="color:#666">No hay reservas activas.</p>';
+                return;
+            }
+            el.innerHTML = holds.map(h => `
+                <div class="hold-card">
+                    <strong>${h.hold_id}</strong>
+                    <span class="status-badge status-${h.status}">${h.status}</span><br>
+                    Usuario: ${h.user_id} | Asientos: ${h.seat_ids.join(', ')}<br>
+                    Total: ${h.total} ${h.currency} | Expira: ${new Date(h.expires_at).toLocaleTimeString()}
+                </div>
+            `).join('');
+        }
+
+        // ─── Confirmar compra ───────────────────────────────
+        async function confirmPurchase() {
+            const holdId = document.getElementById('confirm-hold-id').value;
+            const token = document.getElementById('payment-token').value;
+            const res = await fetch(`${API}/api/confirm`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hold_id: holdId, payment_token: token })
+            });
+            const data = await res.json();
+            const el = document.getElementById('confirm-result');
+            if (data.success || data.status === 'SOLD') {
+                el.innerHTML = `✅ <strong>COMPRA CONFIRMADA</strong><br>` +
+                    `Hold: ${data.hold_id}<br>` +
+                    `Pago: ${data.payment_result}<br>` +
+                    `Asientos: ${(data.seats || []).join(', ')}<br>` +
+                    `Total: ${data.total || 'N/A'} ${data.currency || ''}<br>` +
+                    `Circuit Breaker: ${data.circuit_breaker || 'N/A'}`;
+            } else {
+                el.innerHTML = `⚠️ <strong>${data.payment_result || data.detail?.error || 'RESULT'}</strong><br>` +
+                    `Hold: ${data.hold_id || holdId}<br>` +
+                    `Mensaje: ${data.message || data.detail?.reason || JSON.stringify(data)}<br>` +
+                    `Circuit Breaker: ${data.circuit_breaker || 'N/A'}`;
+            }
+            loadSeats();
+            loadHolds();
+            loadPaymentStatus();
+        }
+
+        // ─── Liberar HOLD ───────────────────────────────────
+        async function releaseHold() {
+            const holdId = document.getElementById('confirm-hold-id').value;
+            const res = await fetch(`${API}/api/holds/${holdId}/release`, { method: 'POST' });
+            const data = await res.json();
+            document.getElementById('confirm-result').innerHTML =
+                `🔓 HOLD liberado: ${holdId}<br>${JSON.stringify(data)}`;
+            loadSeats();
+            loadHolds();
+        }
+
+        // ─── Simular carrera ────────────────────────────────
+        async function simulateRace() {
+            const seatId = document.getElementById('race-seat').value;
+            const numUsers = document.getElementById('race-users').value;
+            const el = document.getElementById('race-result');
+            el.innerHTML = '⏳ Simulando...';
+            const res = await fetch(`${API}/api/simulate/race`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ seat_id: seatId, num_users: parseInt(numUsers) })
+            });
+            const data = await res.json();
+            el.innerHTML = `<strong>Resultado de la carrera:</strong><br>` +
+                `Asiento: ${data.seat_id}<br>` +
+                `Total solicitudes: ${data.total_requests}<br>` +
+                `<span class="race-winner">Ganadores: ${data.winners}</span><br>` +
+                `<span class="race-rejected">Rechazados: ${data.rejected}</span><br>` +
+                `Hold ganador: ${data.hold_id || 'N/A'}<br><br>` +
+                `<strong>Detalle:</strong><br>` +
+                data.details.map(d => {
+                    if (d.includes('WINNER')) return `<span class="race-winner">${d}</span>`;
+                    if (d.includes('REJECTED') || d.includes('ERROR')) return `<span class="race-rejected">${d}</span>`;
+                    return d;
+                }).join('<br>');
+            loadSeats();
+            loadHolds();
+        }
+
+        // ─── Pagos ──────────────────────────────────────────
+        async function loadPaymentStatus() {
+            const res = await fetch(`${API}/api/payment/status`);
+            const data = await res.json();
+            const cls = data.state === 'CLOSED' ? 'cb-closed' : data.state === 'OPEN' ? 'cb-open' : 'cb-half';
+            document.getElementById('payment-status').innerHTML =
+                `Circuit Breaker: <span class="${cls}">${data.state}</span><br>` +
+                `Fallos: ${data.failure_count}/${data.failure_threshold}<br>` +
+                `Recovery timeout: ${data.recovery_timeout}s`;
+        }
+
+        async function forcePayment() {
+            const result = document.getElementById('force-payment').value;
+            await fetch(`${API}/api/payment/force`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ result: result })
+            });
+            loadPaymentStatus();
+        }
+
+        // ─── Auditoría ──────────────────────────────────────
+        async function loadAudit() {
+            const res = await fetch(`${API}/api/audit`);
+            const events = await res.json();
+            const el = document.getElementById('audit-log');
+            if (events.length === 0) {
+                el.innerHTML = '<p style="color:#666">No hay eventos.</p>';
+                return;
+            }
+            el.innerHTML = events.map(e =>
+                `<div class="audit-entry">[${new Date(e.timestamp).toLocaleTimeString()}] ` +
+                `${e.reason} | hold=${e.hold_id || '-'} | seat=${e.seat_id || '-'} ` +
+                `| ${e.from_state || '-'}→${e.to_state || '-'}</div>`
+            ).join('');
+        }
+
+        async function exportAudit() {
+            const res = await fetch(`${API}/api/audit/export`);
+            const data = await res.json();
+            alert(`Auditoría exportada: ${data.events} eventos → ${data.filepath}`);
+        }
+
+        // ─── Config ─────────────────────────────────────────
+        async function loadConfig() {
+            const res = await fetch(`${API}/api/config`);
+            const data = await res.json();
+            const el = document.getElementById('config-info');
+            el.innerHTML =
+                `TTL de reservas: ${data.hold_ttl_seconds}s<br>` +
+                `Máx asientos/usuario: ${data.max_seats_per_user}<br>` +
+                `Moneda: ${data.currency}<br>` +
+                `Evento: ${data.default_event_id}<br>` +
+                `Prob. pago: ${JSON.stringify(data.payment_probs)}<br>` +
+                `Secciones: ${Object.keys(data.seat_sections).join(', ')}`;
+        }
+
+        // ─── Reset ──────────────────────────────────────────
+        async function resetSystem() {
+            if (!confirm('¿Reiniciar el sistema completo?')) return;
+            await fetch(`${API}/api/reset`, { method: 'POST' });
+            selectedSeats.clear();
+            loadSeats(); loadHolds(); loadPaymentStatus(); loadConfig();
+            document.getElementById('hold-result').innerHTML = '';
+            document.getElementById('confirm-result').innerHTML = '';
+            document.getElementById('race-result').innerHTML = '';
+            document.getElementById('audit-log').innerHTML = '';
+        }
+
+        // ─── Auto-refresh ───────────────────────────────────
+        function autoRefresh() {
+            loadSeats(); loadHolds();
+        }
+
+        // ─── Init ───────────────────────────────────────────
+        loadSeats(); loadHolds(); loadPaymentStatus(); loadConfig();
+        setInterval(autoRefresh, 5000);
+    </script>
+</body>
+</html>
