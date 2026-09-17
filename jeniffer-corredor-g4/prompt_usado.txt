@@ -1,0 +1,15 @@
+Bitácora de Prompts — Reto 4: SentinelPay Risk Engine
+
+Prompts utilizados
+
+Durante el desarrollo del Reto 4 — SentinelPay Risk Engine se utilizaron los siguientes prompts de forma progresiva:
+
+1. reto4-prompt1
+
+2. reto4-prompt2
+
+3. reto4-prompt3
+
+4. reto4-prompt4
+
+5. reto4-prompt5
