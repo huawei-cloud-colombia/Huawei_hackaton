@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowMatch Assignment Engine</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>🧩 FlowMatch Assignment Engine</h1>
+  <p class="subtitle">Interfaz de verificación — envía un pedido y observa la decisión del motor en vivo.</p>
+</header>
+
+<main class="layout">
+  <!-- Columna izquierda: formulario + repartidores -->
+  <section class="panel">
+    <h2>1. Enviar un pedido</h2>
+    <form id="order-form">
+      <label>ID del pedido
+        <input type="text" id="order_id" placeholder="(automático si se deja vacío)">
+      </label>
+      <label>Zona de recogida (pickup_zone)
+        <input type="text" id="pickup_zone" value="centro" required>
+      </label>
+      <label>Distancia estimada (km)
+        <input type="number" id="distance_km" value="3.2" step="0.1" min="0" required>
+      </label>
+      <label>Prioridad
+        <select id="priority">
+          <option value="normal">normal</option>
+          <option value="express">express</option>
+        </select>
+      </label>
+      <button type="submit" class="btn btn-primary">Asignar</button>
+    </form>
+
+    <h2>2. Simular ráfaga</h2>
+    <form id="burst-form">
+      <label>Zona
+        <input type="text" id="burst_zone" value="centro" required>
+      </label>
+      <label># de pedidos
+        <input type="number" id="burst_count" value="6" min="2" max="30" required>
+      </label>
+      <label>Prioridad
+        <select id="burst_priority">
+          <option value="normal">normal</option>
+          <option value="express">express</option>
+        </select>
+      </label>
+      <button type="submit" class="btn btn-warning">Simular ráfaga</button>
+    </form>
+
+    <h2>3. Estado de repartidores <button id="refresh-couriers" class="btn btn-small" type="button">↻</button></h2>
+    <div id="surge-banner" class="surge-banner hidden"></div>
+    <table class="couriers-table">
+      <thead><tr><th>courier_id</th><th>zona</th><th>carga</th></tr></thead>
+      <tbody id="couriers-body"></tbody>
+    </table>
+    <button id="reset-couriers" class="btn btn-small" type="button">Reiniciar estado de demo</button>
+  </section>
+
+  <!-- Columna derecha: resultado + rafaga + reportes -->
+  <section class="panel">
+    <h2>Resultado</h2>
+    <div id="result-card" class="result-card result-empty">Envía un pedido para ver la decisión aquí.</div>
+
+    <h2>Resultado de la ráfaga</h2>
+    <div id="burst-results" class="burst-results"></div>
+
+    <h2>Reportes de rechazo (Bono C)</h2>
+    <div id="rejection-reports" class="rejection-reports">
+      <p class="muted">Aún no hay pedidos rechazados en esta sesión.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  FlowMatch Assignment Engine · Reto Hackathon Huawei · Fases 1-4 + Bonos A/B/C/D
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

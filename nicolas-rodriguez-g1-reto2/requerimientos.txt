@@ -1,0 +1,16 @@
+# FlowMatch Assignment Engine - dependencias (Python 3.11+)
+#
+# Instalar con:
+#   pip install -r requerimientos.txt
+
+# --- Runtime (API + motor) ---
+fastapi==0.141.1
+uvicorn==0.49.0
+pydantic==2.13.5
+jinja2==3.1.6
+httpx==0.28.1
+numpy==2.4.6
+scipy==1.17.1
+
+# --- Pruebas (Bono B y Bono D) ---
+pytest==9.1.1

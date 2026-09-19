@@ -1,0 +1,56 @@
+{
+  "rules": {
+    "same_zone_preferred": true,
+    "capacity_enforced": true,
+    "least_loaded_enabled": true
+  },
+  "optimization": {
+    "cost_minimization_enabled": true
+  },
+  "zones": {
+    "neighbors": {
+      "centro": ["norte", "sur", "occidente"],
+      "norte": ["centro", "oriente"],
+      "sur": ["centro", "occidente"],
+      "occidente": ["centro", "sur"],
+      "oriente": ["norte", "centro"]
+    },
+    "avalanche_threshold": 4
+  },
+  "rate_limit": {
+    "enabled": true,
+    "window_seconds": 10,
+    "max_orders_per_courier": 3
+  },
+  "surge": {
+    "enabled": true,
+    "consecutive_saturation_threshold": 3,
+    "contention_duration_seconds": 120
+  },
+  "pricing": {
+    "base_fare_cop": 2000,
+    "rate_per_km_cop": 1500,
+    "cross_zone_surcharge_cop": 1200,
+    "failure_probability": 0.3,
+    "call_latency_ms_min": 80,
+    "call_latency_ms_max": 300,
+    "timeout_seconds": 2.0,
+    "slow_call_probability": 0.1
+  },
+  "circuit_breaker": {
+    "failure_threshold": 3,
+    "open_duration_seconds": 15
+  },
+  "validation": {
+    "max_reasonable_distance_km": 100.0,
+    "future_tolerance_seconds": 300.0
+  },
+  "glm": {
+    "model": "glm-5.2",
+    "api_base_url": "http://149.232.135.126:4000/v1",
+    "api_key_env_var": "GLM_API_KEY",
+    "temperature": 0.2,
+    "max_tokens": 400,
+    "timeout_seconds": 20
+  }
+}

@@ -1,0 +1,7 @@
+[
+  { "courier_id": "cour_A", "zone": "centro", "active_orders": 1, "max_capacity": 3 },
+  { "courier_id": "cour_B", "zone": "norte", "active_orders": 0, "max_capacity": 1 },
+  { "courier_id": "cour_C", "zone": "centro", "active_orders": 3, "max_capacity": 3 },
+  { "courier_id": "cour_D", "zone": "sur", "active_orders": 1, "max_capacity": 1 },
+  { "courier_id": "cour_E", "zone": "occidente", "active_orders": 1, "max_capacity": 1 }
+]

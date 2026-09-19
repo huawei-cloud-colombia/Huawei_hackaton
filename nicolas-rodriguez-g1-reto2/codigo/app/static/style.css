@@ -1,0 +1,147 @@
+:root {
+  --bg: #0f172a;
+  --panel: #1e293b;
+  --panel-border: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.topbar {
+  padding: 20px 24px 8px;
+  border-bottom: 1px solid var(--panel-border);
+}
+.topbar h1 { margin: 0 0 4px; font-size: 22px; }
+.subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 20px 24px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.panel h2 {
+  font-size: 15px;
+  margin: 18px 0 10px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel h2:first-child { margin-top: 0; }
+
+form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+label { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+input, select {
+  background: #0b1220;
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+input:focus, select:focus { outline: 1px solid var(--accent); }
+
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #0b1220;
+}
+.btn-primary { background: var(--accent); }
+.btn-warning { background: var(--yellow); }
+.btn-small { background: var(--panel-border); color: var(--text); padding: 4px 10px; font-size: 12px; margin-left: 6px; }
+.btn:hover { filter: brightness(1.1); }
+
+.couriers-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+.couriers-table th, .couriers-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--panel-border); }
+.couriers-table th { color: var(--muted); font-weight: 500; }
+.load-bar { display: inline-block; width: 60px; height: 8px; background: #0b1220; border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.load-bar-fill { height: 100%; background: var(--green); }
+.load-bar-fill.full { background: var(--red); }
+.load-bar-fill.mid { background: var(--yellow); }
+
+.surge-banner {
+  background: #7f1d1d;
+  border: 1px solid var(--red);
+  color: #fecaca;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.hidden { display: none; }
+
+.result-card {
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--panel-border);
+  font-size: 14px;
+}
+.result-empty { color: var(--muted); }
+.result-ASSIGNED { background: #052e1c; border-color: var(--green); }
+.result-QUEUED { background: #3f2d05; border-color: var(--yellow); }
+.result-REJECTED { background: #3f0d0d; border-color: var(--red); }
+
+.result-status { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.result-ASSIGNED .result-status { color: var(--green); }
+.result-QUEUED .result-status { color: var(--yellow); }
+.result-REJECTED .result-status { color: var(--red); }
+
+.result-meta { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.reasons-list { margin: 0; padding-left: 18px; font-size: 13px; }
+.reasons-list li { margin-bottom: 3px; }
+.reasons-list code { background: #0b1220; padding: 1px 5px; border-radius: 4px; }
+
+.burst-results { display: flex; flex-direction: column; gap: 6px; }
+.burst-item {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 6px 10px; border-radius: 6px; font-size: 13px;
+  border: 1px solid var(--panel-border);
+}
+.burst-item.status-ASSIGNED { border-left: 4px solid var(--green); }
+.burst-item.status-QUEUED { border-left: 4px solid var(--yellow); }
+.burst-item.status-REJECTED { border-left: 4px solid var(--red); }
+
+.rejection-reports { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; }
+.report-card { background: #0b1220; border: 1px solid var(--panel-border); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.report-card .order-id { color: var(--accent); font-weight: 600; }
+.report-card .explanation { color: var(--text); margin-top: 6px; }
+
+.muted { color: var(--muted); font-size: 13px; }
+
+.footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 20px;
+}

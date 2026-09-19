@@ -1,0 +1,175 @@
+BITÁCORA DE PROMPTS — FlowMatch Assignment Engine
+Herramienta: copiloto de IA (GLM 5.2) integrado en el flujo de desarrollo.
+Formato: [N] prompt -> qué devolvió / qué se corrigió o iteró.
+
+================================================================================
+[1] PLANEACIÓN DE ARQUITECTURA
+================================================================================
+Prompt:
+"Lee el enunciado completo del Reto 2 (FlowMatch Assignment Engine). Antes de escribir
+código, propón: (a) stack (API o CLI, lenguaje, librerías), (b) estructura de carpetas,
+(c) cómo vas a modelar el estado de los repartidores para que sea compatible con el
+ejemplo de entrada del enunciado (que manda 'couriers' en cada request) y a la vez
+soporte estado persistente entre pedidos (necesario para ventana deslizante, contención
+y la demo de ráfaga de la Fase 4). No escribas código todavía, solo el plan."
+
+Resultado: propuesta de Python + FastAPI (API real, documentación automática con Swagger,
+fácil de conectar a una interfaz web sin backend adicional) + Jinja2/vanilla JS para la
+Fase 4 (sin build step, para que cualquier juez lo corra con un solo comando). Para el
+estado de repartidores, se decidió: el campo 'couriers' del payload actúa como SEMILLA
+(solo se usa si el courier_id es nuevo); una vez registrado, el motor es la única fuente
+de verdad de active_orders. Esto se aceptó tal cual porque resolvía la tensión entre
+"debe funcionar con el ejemplo tal cual está en el enunciado" y "debe tener estado real
+para las Fases 2-4" sin necesitar dos modos distintos.
+
+================================================================================
+[2] FASE 1 — CADENA DE REGLAS
+================================================================================
+Prompt:
+"Implementa la Fase 1 como una cadena de reglas configurable (activar/desactivar cada
+una vía config.json), no como if/else anidados: misma zona, capacidad, menor carga.
+Cada regla debe producir una entrada en reasons[] trazable a esa regla específica.
+Verifica contra el ejemplo exacto del enunciado (cour_A vs cour_B vs cour_C) antes de
+seguir."
+
+Resultado: primera versión de rules_engine.py. Al escribir la prueba que reproduce el
+ejemplo exacto del enunciado, el texto de 'capacity_ok' no mencionaba por qué se
+descartó cour_C (solo decía "N couriers with free capacity"). Se pidió una iteración:
+
+Prompt de corrección:
+"El ejemplo del enunciado muestra 'capacity_ok': 'cour_A at 1/3 (cour_C skipped: 3/3
+full)' — el reason debe decir explícitamente CUÁL repartidor se descartó y por qué,
+no solo un conteo. Ajusta select_courier para construir ese reason después de elegir
+al ganador, usando la lista de repartidores llenos."
+
+Se aceptó el ajuste (mover la construcción del reason 'capacity_ok' a después de conocer
+al elegido, para poder listar los descartados) — quedó como el patrón usado en el resto
+de reasons.
+
+================================================================================
+[3] FASE 2 — VENTANA DESLIZANTE Y CONTENCIÓN
+================================================================================
+Prompt:
+"Implementa el límite de ritmo por repartidor con una ventana deslizante real (deque de
+timestamps, no un contador que se resetea cada N segundos de reloj). Implementa el modo
+de contención: se activa tras 3 pedidos consecutivos donde TODOS los repartidores están
+llenos, dura 120s configurables, expira solo, y durante la ventana los pedidos normal se
+rechazan sin volver a evaluar repartidores mientras que los express sí intentan
+encolarse. Escribe la prueba que reproduce el escenario de los 6 pedidos del enunciado
+antes de dar esto por terminado."
+
+Resultado: SurgeController + SlidingWindowRateLimiter + ZoneLoadTracker. Al escribir la
+prueba de expiración automática con consecutive_saturation_threshold=1, la contención se
+reactivaba en el pedido inmediatamente siguiente a la expiración (porque un solo evento
+de saturación ya alcanza el umbral=1). Se corrigió subiendo el umbral de esa prueba
+específica a 2 y documentando explícitamente por qué (para separar "se activó" de
+"expiró y se reinició" como dos momentos observables distintos).
+
+================================================================================
+[4] FASE 3 — CIRCUIT BREAKER Y COSTO
+================================================================================
+Prompt:
+"Implementa mock_pricing() con probabilidad de fallo/timeout configurable y un circuit
+breaker de 3 estados (closed/open/half_open). El costo degradado, según el enunciado,
+debe seguir pareciendo una tarifa 'fija' — pero el ejemplo de salida de la Fase 3 muestra
+el mismo costo (6.800) que el ejemplo de la Fase 1, con pricing_status en
+circuit_open_degraded_flat_rate. Decide qué significa 'tarifa base fija' para que ese
+número cuadre exactamente."
+
+Resultado: se interpretó "tarifa base fija" como la fórmula interna determinista (sin el
+ajuste dinámico ±10% del servicio externo simulado), no como un monto flat idéntico para
+todos los pedidos — así el costo degradado sigue variando con la distancia real del
+pedido, y coincide exactamente con el ejemplo del enunciado. Se escribió una prueba que
+fuerza el circuito abierto y compara la salida byte a byte contra el ejemplo documentado
+(status/courier/cost/pricing_status) para dejar esta decisión verificada, no solo
+documentada.
+
+================================================================================
+[5] BONO A — LOTES
+================================================================================
+Prompt:
+"Implementa la optimización por lotes con el algoritmo húngaro (scipy). Modela la
+capacidad de cada repartidor como múltiples 'ranuras' en la matriz de costos para que
+pueda recibir más de un pedido del lote. Después, dame un ejemplo numérico concreto,
+sin empates, donde el greedy deje a un pedido varado con el peor repartidor disponible
+y el lote lo resuelva mejor — esto lo pide explícitamente la rúbrica."
+
+Resultado: al intentar construir ese ejemplo usando la fórmula real de costo del motor
+(compute_base_cost), el greedy y el lote daban el mismo resultado en varios intentos.
+Se le pidió al copiloto que explicara por qué, y la respuesta (verificada a mano) fue
+correcta: con un costo por-pedido independiente del repartidor más un recargo FIJO por
+cruce de zona, el costo total de cualquier asignación completa solo depende de cuántos
+emparejamientos son "fuera de zona" — minimizar costo equivale a maximizar
+coincidencias de zona, y el greedy (que siempre prefiere la misma zona cuando puede)
+casi siempre llega también a ese óptimo con esa fórmula en particular. Se decidió,
+en vez de forzar un ejemplo artificial sobre esa fórmula, documentar la limitación
+honestamente y dar la demostración con una matriz de costos explícita que aísla la
+propiedad general del optimizador (ver docs/BONO_A_LOTES.md) — más correcto que
+maquillar un ejemplo "realista" que en realidad no demuestra nada distinto.
+
+================================================================================
+[6] BONO B — CONCURRENCIA
+================================================================================
+Prompt:
+"Decide entre lock global de sección crítica vs. locks finos por repartidor vs.
+reintentos optimistas para evitar sobre-asignación bajo concurrencia. Justifica la
+elección y escribe una prueba de carga real con ThreadPoolExecutor (no solo afirmar que
+es seguro): N hilos, un threading.Barrier para maximizar el solapamiento real, y
+verificar que active_orders nunca excede max_capacity."
+
+Resultado: se eligió lock global (RLock) sobre todo el bloque de decisión+reserva, con
+las llamadas de I/O lenta (pricing, GLM) explícitamente fuera del lock. Se aceptó el
+trade-off (serializa decisiones, no I/O) documentado en el README en vez de complicar el
+diseño con locks finos que no aportan mucho en un motor de un solo proceso en memoria.
+
+================================================================================
+[7] BONO C — EXPLICABILIDAD
+================================================================================
+Prompt:
+"Cada REJECTED debe generar automáticamente un reporte JSON con las reglas activadas,
+el estado de los repartidores y una explicación en lenguaje natural para el cliente
+final generada por GLM 5.2, sin tecnicismos internos (nada de 'circuit breaker' ni
+nombres de reglas en inglés en el texto para el cliente). Si no hay API key, debe
+funcionar igual con plantillas locales."
+
+Resultado: RejectionReporter + GLMClient con modo demo. Se revisó el prompt del sistema
+para GLM para prohibir explícitamente mencionar términos internos, después de que una
+primera versión de prueba mencionaba "sliding window" en la explicación de plantilla.
+
+================================================================================
+[8] FASE 4 — INTERFAZ GRÁFICA
+================================================================================
+Prompt:
+"Construye la interfaz sin ningún framework de build (HTML+CSS+JS vanilla servido por
+FastAPI): formulario de pedido, tabla de repartidores en vivo con barra de carga,
+resultado coloreado por estado (verde/amarillo/rojo), y un botón que dispare N pedidos
+seguidos a una zona para ver la contención activarse en vivo, tal como lo describe el
+flujo esperado del enunciado."
+
+Resultado: index.html + app.js + style.css. Al probar el flujo completo (asignar el
+pedido de ejemplo y luego simular ráfaga de 6), la ráfaga no llegaba a rechazar ningún
+pedido porque la capacidad total de la demo (5 repartidores) sobraba. Se ajustó
+data/couriers_sample.json para que la capacidad total del sistema fuera justo la
+necesaria para reproducir el flujo descrito en el enunciado (asignar, luego encolar,
+luego rechazar en la ráfaga), sin tocar los valores de cour_A/cour_B/cour_C que sí están
+fijados por el ejemplo de la Fase 1.
+
+================================================================================
+[9] VERIFICACIÓN FINAL
+================================================================================
+Prompt:
+"Corre toda la suite de pruebas y un smoke test end-to-end contra la API real (TestClient
+de FastAPI): salud, listar repartidores, asignar el pedido de ejemplo, simular ráfaga,
+ver los reportes de rechazo generados, asignar un lote, y cargar la página principal.
+Si algo falla, no lo parches a ciegas: explica la causa raíz antes de tocar código."
+
+Resultado: la primera corrida de pruebas falló en cascada (17 de 38) porque el timestamp
+por defecto de los pedidos de prueba (una fecha real de 2024) quedaba "en el futuro"
+respecto a los valores sintéticos de `now` usados en los escenarios de Fase 2/3 (p. ej.
+now=1000.0), dado que validate_order compara el timestamp del pedido contra el `now`
+que recibe, no contra el reloj real. La causa raíz identificada (no un parche puntual):
+el timestamp por defecto de las pruebas debía ser consistente con la línea de tiempo
+sintética que usan esas pruebas, así que se fijó el timestamp por defecto en el epoch
+(0.0) para los helpers de prueba, dejando la validación de "timestamp futuro" intacta y
+cubierta por su propio caso de prueba explícito (con un timestamp real del año 2999).
+Tras el fix, 38/38 pruebas y el smoke test end-to-end pasaron.
